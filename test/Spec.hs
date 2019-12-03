@@ -3,7 +3,7 @@ import Lib
 import Intcode
 
 main :: IO ()
-main = hspec $ do
+main = hspec $ do 
     describe "calcFuel" $ do
         it "12 returns 2" $
             calcFuel 12 `shouldBe` 2

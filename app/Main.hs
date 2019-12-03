@@ -2,6 +2,7 @@ module Main where
 
 import Util
 import Lib
+import Intcode
 import Text.Printf
 import Text.Show
 
@@ -17,9 +18,7 @@ day1Part2 :: [Int] -> Int
 day1Part2 = sum . map calcFuelRec
 
 day2Part1 :: [Int] -> Int
-day2Part1 input =
-    let program = replaceIn 12 1 (replaceIn 2 2 input)
-    in (intcodes1 program) !! 0
+day2Part1 = head . (runWithNounVerb 12 2)
 
 
 main :: IO ()
@@ -29,4 +28,3 @@ main = do
     printAnswer 1 2 (day1Part2 input1)
     input2 <- intRowFromFile "data/day2.txt"
     printAnswer 2 1 (day2Part1 input2)
-

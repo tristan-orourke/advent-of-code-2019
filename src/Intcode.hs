@@ -1,7 +1,8 @@
 module Intcode
     (
         readPointerAtPointer,
-        runIntcode
+        runIntcode,
+        runWithNounVerb
     ) where
 
 import Util
@@ -41,6 +42,10 @@ runIntcode input =
     let (Program m p) = runIntcodeRec (Program input 0) in
     m
 
-getIntcodeOutput :: [Int] -> Int
-getIntcodeOutput = head . runIntcode
+setNounVerb :: Int -> Int -> [Int] -> [Int]
+setNounVerb n v = replaceIn n 1 . (replaceIn v 2)
+
+runWithNounVerb :: Int -> Int -> [Int] -> [Int]
+runWithNounVerb n v = runIntcode . (setNounVerb n v)
+
 
