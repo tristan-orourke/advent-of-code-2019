@@ -2,7 +2,7 @@ module Lib
     (
         calcFuel,
         calcFuelRec,
-        readPos,
+        readPosOfPos,
         intcodes1
     ) where
 
@@ -18,12 +18,12 @@ calcFuelRec mass =
         then 0
         else fuel + calcFuelRec(fuel)
 
-readPos :: [Int] -> Int -> Int
-readPos l pos = l !! (l !! pos)
+readPosOfPos :: [Int] -> Int -> Int
+readPosOfPos l pos = l !! (l !! pos)
 
 opcodeFunc :: (Int -> Int -> Int) -> [Int] -> Int -> [Int]
 opcodeFunc f l pos = 
-    let (a, b) = (readPos l (pos+1), readPos l (pos + 2))
+    let (a, b) = (readPosOfPos l (pos+1), readPosOfPos l (pos + 2))
     in replaceAt l (l !! (pos+3)) (f a b) 
 
 opcodeAdd :: [Int] -> Int -> [Int]
