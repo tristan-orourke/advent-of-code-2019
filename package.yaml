@@ -1,4 +1,4 @@
-name:                advent-of-code-2019
+name:                advent-of-code2019
 version:             0.1.0.0
 github:              "tristan-orourke/advent-of-code-2019"
 license:             MIT
@@ -21,6 +21,7 @@ description:         Please see the README on GitHub at <https://github.com/tris
 
 dependencies:
 - base >= 4.7 && < 5
+- hspec
 
 library:
   source-dirs: src
@@ -34,7 +35,7 @@ executables:
     - -rtsopts
     - -with-rtsopts=-N
     dependencies:
-    - advent-of-code
+    - advent-of-code2019
 
 tests:
   advent-of-code-test:
@@ -45,4 +46,4 @@ tests:
     - -rtsopts
     - -with-rtsopts=-N
     dependencies:
-    - advent-of-code
+    - advent-of-code2019

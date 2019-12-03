@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: b72ba99965ee0f85491089b77870176355f3a72a986dc8903e485d15841989f1
+-- hash: 62bd2f39d80c622e428bce6c3aee732f098f5a388f0527ad5de05ddb8683e99f
 
 name:           advent-of-code2019
 version:        0.1.0.0
@@ -34,7 +34,6 @@ library
       src
   build-depends:
       base >=4.7 && <5
-    , hspec
   default-language: Haskell2010
 
 executable advent-of-code-exe
@@ -47,7 +46,6 @@ executable advent-of-code-exe
   build-depends:
       advent-of-code2019
     , base >=4.7 && <5
-    , hspec
   default-language: Haskell2010
 
 test-suite advent-of-code-test
