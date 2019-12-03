@@ -19,12 +19,18 @@ main = hspec $ do
             calcFuelRec 1969 `shouldBe` 966
         it "100756 returns 50346" $
             calcFuelRec 100756 `shouldBe` 50346
-    describe "intcode1" $ do
+    describe "readPos" $ do
+        it "1 of 2,3,0,3,99 is 3" $
+            readPos [2,3,0,3,99] 1 `shouldBe` 3
+        it "2 of 2,3,0,3,99 is 2" $
+            readPos [2,3,0,3,99] 2 `shouldBe` 2
+        
+    describe "intcodes1" $ do
         it "1,0,0,0,99 becomes 2,0,0,0,99" $
-            intcode1 [1,0,0,0,99] `shouldBe` [2,0,0,0,99]
+            intcodes1 [1,0,0,0,99] `shouldBe` [2,0,0,0,99]
         it "2,3,0,3,99 becomes 2,3,0,6,99" $
-            intcode1 [2,3,0,3,99] `shouldBe` [2,3,0,6,99]
+            intcodes1 [2,3,0,3,99] `shouldBe` [2,3,0,6,99]
         it "2,4,4,5,99,0 becomes 2,4,4,5,99,9801" $
-            intcode1 [2,4,4,5,99,0] `shouldBe` [2,4,4,5,99,9801]
+            intcodes1 [2,4,4,5,99,0] `shouldBe` [2,4,4,5,99,9801]
         it "1,1,1,4,99,5,6,0,99 becomes 30,1,1,4,2,5,6,0,99" $
-            intcode1 [1,1,1,4,99,5,6,0,99] `shouldBe` [30,1,1,4,2,5,6,0,99]
+            intcodes1 [1,1,1,4,99,5,6,0,99] `shouldBe` [30,1,1,4,2,5,6,0,99]

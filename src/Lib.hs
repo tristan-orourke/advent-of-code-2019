@@ -1,25 +1,12 @@
 module Lib
-    ( 
-        strToInt,
-        intsFromFile,
+    (
         calcFuel,
         calcFuelRec,
-        day1Part1,
-        day1Part2,
-        intcode1
+        readPos,
+        intcodes1
     ) where
 
-strToInt :: String -> Int
-strToInt = read
-
-intsFromFile :: String -> IO [Int]
-intsFromFile file = do
-    input <- readFile file
-    let numInput = map strToInt (lines input)
-    return numInput
-
-zeroIfNegative :: Int -> Int
-zeroIfNegative = max 0
+import Util
 
 calcFuel :: Int -> Int
 calcFuel mass = (div mass 3) - 2
@@ -31,13 +18,30 @@ calcFuelRec mass =
         then 0
         else fuel + calcFuelRec(fuel)
 
-day1Part1 :: [Int] -> Int
-day1Part1 = sum . map calcFuel
+readPos :: [Int] -> Int -> Int
+readPos l pos = l !! (l !! pos)
 
-day1Part2 :: [Int] -> Int
-day1Part2 = sum . map calcFuelRec
+opcodeFunc :: (Int -> Int -> Int) -> [Int] -> Int -> [Int]
+opcodeFunc f l pos = 
+    let (a, b) = (readPos l (pos+1), readPos l (pos + 2))
+    in replaceAt l (l !! (pos+3)) (f a b) 
 
-intcode1 :: [Int] -> [Int]
-intcode1 program = program
+opcodeAdd :: [Int] -> Int -> [Int]
+opcodeAdd = opcodeFunc (+)
+
+opcodeMult :: [Int] -> Int -> [Int]
+opcodeMult = opcodeFunc (*)
+
+intcodesRec :: [Int] -> Int -> [Int]
+intcodesRec program pos = 
+    let code = program !! pos
+    in case code of
+        1 -> intcodesRec (opcodeAdd program pos) (pos + 4)
+        2 -> intcodesRec (opcodeMult program pos) (pos + 4)
+        99 -> program
+        _ -> program
+
+intcodes1 :: [Int] -> [Int]
+intcodes1 program = intcodesRec program 0
 
 
