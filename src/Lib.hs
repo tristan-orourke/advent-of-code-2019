@@ -2,11 +2,12 @@ module Lib
     (
         calcFuel,
         calcFuelRec,
-        readPosOfPos,
-        intcodes1
+        findInputForTargetOutput,
+        findArgsForTargetOutput
     ) where
 
 import Util
+import Intcode
 
 calcFuel :: Int -> Int
 calcFuel mass = (div mass 3) - 2
@@ -18,30 +19,23 @@ calcFuelRec mass =
         then 0
         else fuel + calcFuelRec(fuel)
 
-readPosOfPos :: [Int] -> Int -> Int
-readPosOfPos l pos = l !! (l !! pos)
+allTwoArgOutputs :: [a] -> [b] -> (a -> b -> c) -> [c]
+allTwoArgOutputs as bs f = 
+    let fa a = map (f a) bs in
+        concat (map fa as)
 
-opcodeFunc :: (Int -> Int -> Int) -> [Int] -> Int -> [Int]
-opcodeFunc f l pos = 
-    let (a, b) = (readPosOfPos l (pos+1), readPosOfPos l (pos + 2))
-    in replaceAt l (l !! (pos+3)) (f a b) 
+allTuples :: [a] -> [b] -> [(a, b)]
+allTuples as bs = 
+    let toTuple a b = (a, b) in
+        allTwoArgOutputs as bs toTuple
 
-opcodeAdd :: [Int] -> Int -> [Int]
-opcodeAdd = opcodeFunc (+)
+findInputForTargetOutput :: Eq b => (a -> b) -> b -> [a] -> Maybe a
+findInputForTargetOutput f t = foldl f' Nothing
+    where f' a n = case a of
+                    Just x -> Just x
+                    Nothing -> if f n == t then Just n else Nothing
 
-opcodeMult :: [Int] -> Int -> [Int]
-opcodeMult = opcodeFunc (*)
-
-intcodesRec :: [Int] -> Int -> [Int]
-intcodesRec program pos = 
-    let code = program !! pos
-    in case code of
-        1 -> intcodesRec (opcodeAdd program pos) (pos + 4)
-        2 -> intcodesRec (opcodeMult program pos) (pos + 4)
-        99 -> program
-        _ -> program
-
-intcodes1 :: [Int] -> [Int]
-intcodes1 program = intcodesRec program 0
-
-
+findArgsForTargetOutput :: Eq c => [a] -> [b] -> (a -> b -> c) -> c -> Maybe (a, b)
+findArgsForTargetOutput as bs f t = 
+    let f' = uncurry f in
+        findInputForTargetOutput f' t (allTuples as bs) 

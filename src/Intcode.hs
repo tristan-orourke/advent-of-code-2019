@@ -2,7 +2,8 @@ module Intcode
     (
         readPointerAtPointer,
         runIntcode,
-        runWithNounVerb
+        runWithNounVerb,
+        intcodeOutput
     ) where
 
 import Util
@@ -47,5 +48,8 @@ setNounVerb n v = replaceIn n 1 . (replaceIn v 2)
 
 runWithNounVerb :: Int -> Int -> [Int] -> [Int]
 runWithNounVerb n v = runIntcode . (setNounVerb n v)
+
+intcodeOutput :: [Int] -> Int
+intcodeOutput = head
 
 
