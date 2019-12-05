@@ -61,15 +61,25 @@ allTuples as bs =
     let toTuple a b = (a, b) in
         allTwoArgOutputs as bs toTuple
 
+-- Nothing becomes the default Left a
+maybeToEither :: a -> Maybe b -> Either a b
+maybeToEither = maybeToRight
+
+-- Left _ becomes Nothing
+eitherToMaybe :: Either a b -> Maybe b
+eitherToMaybe = rightToMaybe
+
 leftToMaybe :: Either a b -> Maybe a
-leftToMaybe e = case e of
-    Left a -> Just a
-    Right _ -> Nothing
+leftToMaybe = either Just (const Nothing)
+
+rightToMaybe :: Either a b -> Maybe b
+rightToMaybe = either (const Nothing) Just
 
 maybeToLeft :: b -> Maybe a -> Either a b
-maybeToLeft x m = case m of
-    Just a -> Left a
-    Nothing -> Right x
+maybeToLeft = flip maybe Left . Right
+
+maybeToRight :: a -> Maybe b -> Either a b
+maybeToRight = flip maybe Right . Left
 
 addMaybe :: Num a => Maybe a -> Maybe a -> Maybe a
 addMaybe = liftA2 (+)
