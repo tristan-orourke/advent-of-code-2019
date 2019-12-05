@@ -3,6 +3,7 @@ module Main where
 import Util
 import Lib
 import Intcode
+import Wires
 import Text.Printf
 import Text.Show
 
@@ -27,6 +28,8 @@ day2Part2 m t =
         let f n v = intcodeOutput (runWithNounVerb n v m) in
             maybe 0 transformNounVerb (findArgsForTargetOutput [0..99] [0..99] f t)
 
+day3Part1 :: [String] -> Int
+day3Part1 xs = smallestIntersectDistOfPaths (xs !! 0) (xs !! 1)
 
 main :: IO ()
 main = do
@@ -36,3 +39,5 @@ main = do
     input2 <- intRowFromFile "data/day2.txt"
     printAnswer 2 1 (day2Part1 input2)
     printAnswer 2 2 (day2Part2 input2 19690720)
+    input3 <- readFile "data/day3.txt"
+    printAnswer 3 1 (day3Part1 (lines input3))

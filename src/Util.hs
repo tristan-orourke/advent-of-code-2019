@@ -1,8 +1,10 @@
 module Util
     ( 
         strToInt,
+        splitOn,
         intLinesFromFile,
         intRowFromFile,
+        strLinesFromFile,
         zeroIfNegative,
         replaceAt,
         replaceIn
@@ -32,6 +34,11 @@ intRowFromFile file = do
     let numInput = map strToInt (splitOn ',' input)
     return numInput
 
+strLinesFromFile :: String -> IO [String]
+strLinesFromFile file = do
+    input <- readFile file
+    let lineInput = (lines input)
+    return lineInput
 
 zeroIfNegative :: Int -> Int
 zeroIfNegative = max 0
