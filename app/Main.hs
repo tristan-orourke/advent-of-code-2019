@@ -30,6 +30,8 @@ day2Part2 m t =
 
 day3Part1 :: [String] -> Int
 day3Part1 xs = smallestIntersectDistOfPaths (xs !! 0) (xs !! 1)
+day3Part2 :: [String] -> Int
+day3Part2 xs = lowestIntersectionLengthOfPaths (xs !! 0) (xs !! 1)
 
 main :: IO ()
 main = do
@@ -41,3 +43,4 @@ main = do
     printAnswer 2 2 (day2Part2 input2 19690720)
     input3 <- readFile "data/day3.txt"
     printAnswer 3 1 (day3Part1 (lines input3))
+    printAnswer 3 2 (day3Part2 (lines input3))

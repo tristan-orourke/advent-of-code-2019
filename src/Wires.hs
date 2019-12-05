@@ -116,7 +116,8 @@ instance Path Wire where
             in let lengthToPointAccum a w = case a of
                     Left n -> Left n
                     Right d -> lengthToPoint' w d
-            in leftToMaybe $ foldl lengthToPointAccum (Right 0) ws
+            in leftToMaybe $ foldl lengthToPointAccum (Right 0) (reverse ws)
+            -- Reverse here is slower than it should be. Why isn't foldr working?
             
 
 originP :: Point
@@ -205,8 +206,8 @@ lowestIntersectionLengthOfPaths :: String -> String -> Int
 lowestIntersectionLengthOfPaths = wireFuncOfPaths lowestInstersectionLength
 
 -- >>> len $ fromPathStr "U100,L10,D40,R20"
--- >>> x = fromPathStr "U100,L10,D40,R20"
--- >>> lengthToPoint x $ tip $ fromPathStr "U100,L10,D40,R20"
+-- >>> x = fromPathStr "U100,L10,D40,R30"
+-- >>> lengthToPoint x $ tip x
 -- 170
--- Just 20
+-- Just 30
 --
