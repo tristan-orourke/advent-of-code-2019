@@ -7,7 +7,10 @@ module Util
         strLinesFromFile,
         zeroIfNegative,
         replaceAt,
-        replaceIn
+        replaceIn,
+        isBetween,
+        allTwoArgOutputs,
+        allTuples,
     ) where
 
 strToInt :: String -> Int
@@ -51,3 +54,19 @@ replaceAt l pos v =
 replaceIn :: a -> Int -> [a] -> [a]
 replaceIn v pos l = replaceAt l pos v 
 
+-- Is inclusive, ie true if test is equal to start or end
+isBetween :: Ord a => a -> a -> a -> Bool
+isBetween start end test =
+    if start <= end then (start <= test) && (test <= end)
+                    else (start >= test) && (test >= end)
+ 
+
+allTwoArgOutputs :: [a] -> [b] -> (a -> b -> c) -> [c]
+allTwoArgOutputs as bs f = 
+    let fa a = map (f a) bs in
+        concat (map fa as)
+
+allTuples :: [a] -> [b] -> [(a, b)]
+allTuples as bs = 
+    let toTuple a b = (a, b) in
+        allTwoArgOutputs as bs toTuple

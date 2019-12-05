@@ -19,16 +19,6 @@ calcFuelRec mass =
         then 0
         else fuel + calcFuelRec(fuel)
 
-allTwoArgOutputs :: [a] -> [b] -> (a -> b -> c) -> [c]
-allTwoArgOutputs as bs f = 
-    let fa a = map (f a) bs in
-        concat (map fa as)
-
-allTuples :: [a] -> [b] -> [(a, b)]
-allTuples as bs = 
-    let toTuple a b = (a, b) in
-        allTwoArgOutputs as bs toTuple
-
 findInputForTargetOutput :: Eq b => (a -> b) -> b -> [a] -> Maybe a
 findInputForTargetOutput f t = foldl f' Nothing
     where f' a n = case a of

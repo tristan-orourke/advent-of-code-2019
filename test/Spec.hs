@@ -37,17 +37,17 @@ main = hspec $ do
         it "1,1,1,4,99,5,6,0,99 becomes 30,1,1,4,2,5,6,0,99" $
             runIntcode [1,1,1,4,99,5,6,0,99] `shouldBe` [30,1,1,4,2,5,6,0,99]
     describe "Wires.extendPathSeg" $ do
-        it "Extend newWire by U3 gives [(0,3),(0,2),(0,1),(0,0)]" $
-            extendPathSeg "U3" newWire `shouldBe` fromCoords [(0,3),(0,2),(0,1),(0,0)]
-        it "Extend newWire by L2 gives [(-2,0),(-1,0),(0,0)]" $
-            extendPathSeg "L2" newWire `shouldBe` fromCoords [(-2,0),(-1,0),(0,0)]
+        it "Extend newWire by U3 gives [(0,3)(0,0)]" $
+            toCoords (extendPathSeg "U3" newWire) `shouldBe` [(0,3)]
+        it "Extend newWire by L2 gives [(-2,0),(0,0)]" $
+            toCoords (extendPathSeg "L2" newWire) `shouldBe` [(-2,0)]
     describe "Wires.tipDistance" $ do
         it "Wire extended by U3 should have tip distance 3" $
             tipDistance (extendPathSeg "U3" newWire) `shouldBe` 3
-        it "Wire from coords [(3,4)] should have tip distance 7" $
-            tipDistance (fromCoords [(3,4)]) `shouldBe` 7
+        it "Wire extended by L3,U4 should have tip distance 7" $
+            tipDistance (fromPathStr "L3,U4") `shouldBe` 7
     describe "Wires.fromPath" $ do
-        it "Path U100,L10,D40,R20 70" $
+        it "Path U100,L10,D40,R20 should have distance 70" $
             tipDistance (fromPathStr "U100,L10,D40,R20") `shouldBe` 70
     describe "Wires.smallestIntersectDistOfPaths" $ do
         it "is 159 for R75,D30,R83,U83,L12,D49,R71,U7,L72 and U62,R66,U55,R34,D71,R55,D58,R83" $
