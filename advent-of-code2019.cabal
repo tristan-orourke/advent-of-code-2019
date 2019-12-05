@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 1b9c40ed5579ea73ba7932765d90787b0cf559447cbf31cd29886b4d1027e561
+-- hash: 6c9e3b2cdda9f34436061d47302baa78b657c9a2cb15e74b2ec071963467de53
 
 name:           advent-of-code2019
 version:        0.1.0.0
@@ -29,6 +29,7 @@ library
   exposed-modules:
       Intcode
       Lib
+      Passwords
       Util
       Wires
   other-modules:

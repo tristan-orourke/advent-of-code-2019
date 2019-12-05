@@ -1,22 +1,7 @@
-module Util
-    ( 
-        strToInt,
-        splitOn,
-        intLinesFromFile,
-        intRowFromFile,
-        strLinesFromFile,
-        zeroIfNegative,
-        replaceAt,
-        replaceIn,
-        isBetween,
-        allTwoArgOutputs,
-        allTuples,
-        leftToMaybe,
-        maybeToLeft,
-        addMaybe
-    ) where
+module Util where
 
 import Data.Maybe
+import Control.Applicative
 
 strToInt :: String -> Int
 strToInt = read
@@ -87,6 +72,8 @@ maybeToLeft x m = case m of
     Nothing -> Right x
 
 addMaybe :: Num a => Maybe a -> Maybe a -> Maybe a
-addMaybe a b = if (isNothing a) || (isNothing b) 
-    then Nothing
-    else Just ((fromJust a) + (fromJust b))
+addMaybe = liftA2 (+)
+
+digits :: Integral x => x -> [x]
+digits 0 = []
+digits x = digits (x `div` 10) ++ [x `mod` 10]
