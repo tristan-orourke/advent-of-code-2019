@@ -113,10 +113,10 @@ instance Path Wire where
         let lengthToPoint' w d = case lengthToPoint w p of
                 Just n -> Left (d + n)
                 Nothing -> Right (d + len w)
-            in let lengthToPointAccum a w = case a of
+            in let lengthToPointAccum w a = case a of
                     Left n -> Left n
                     Right d -> lengthToPoint' w d
-            in leftToMaybe $ foldl lengthToPointAccum (Right 0) (reverse ws)
+            in leftToMaybe $ foldr lengthToPointAccum (Right 0) ws
             -- Reverse here is slower than it should be. Why isn't foldr working?
             
 
