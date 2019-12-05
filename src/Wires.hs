@@ -17,6 +17,7 @@ module Wires
 import Util
 import Data.List
 import Data.Maybe
+import Control.Monad
 
 class Vector a where
     add, sub :: a -> a -> a
@@ -109,16 +110,12 @@ instance Path Wire where
     intersections (Wire as) (Wire bs) = delete originP (concat (allTwoArgOutputs as bs intersections))
     len (Wire ws) = sum (map len ws)
     pointIntersects (Wire ws) p = any ((flip pointIntersects) p) ws
-    lengthToPoint (Wire ws) p =
-        let lengthToPoint' w d = case lengthToPoint w p of
+    lengthToPoint (Wire ws) p = leftToMaybe $ foldM (lengthToPoint') 0 (reverse ws)
+        where 
+            lengthToPoint' :: Int -> WireSegment -> Either Int Int
+            lengthToPoint' d w = case lengthToPoint w p of
                 Just n -> Left (d + n)
-                Nothing -> Right (d + len w)
-            in let lengthToPointAccum w a = case a of
-                    Left n -> Left n
-                    Right d -> lengthToPoint' w d
-            in leftToMaybe $ foldr lengthToPointAccum (Right 0) ws
-            -- Reverse here is slower than it should be. Why isn't foldr working?
-            
+                Nothing -> Right (d + len w)            
 
 originP :: Point
 originP = Pt 0 0
