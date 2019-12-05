@@ -1,6 +1,8 @@
 module Wires
     (
         Wire (..),
+        Point (..),
+        lengthToPoint,
         newWire,
         toCoords,
         extendPathSeg,
@@ -8,11 +10,13 @@ module Wires
         fromPathStr,
         manhattanDist,
         tipDistance,
-        smallestIntersectDistOfPaths
+        smallestIntersectDistOfPaths,
+        lowestIntersectionLengthOfPaths,
     ) where
 
 import Util
 import Data.List
+import Data.Maybe
 
 class Vector a where
     add, sub :: a -> a -> a
@@ -34,6 +38,7 @@ class Path a where
     intersections :: a -> a -> [Point]
     len :: a -> Int
     pointIntersects :: a -> Point -> Bool
+    lengthToPoint :: a -> Point -> Maybe Int
 
 data Direction = Up | Down | L | R
     deriving (Eq, Show)
@@ -86,8 +91,9 @@ instance Path WireSegment where
     pointIntersects w (Pt x' y') = 
         let ((Pt x1 y1), (Pt x2 y2)) = endpoints w in
             if segmentAxis w == Horizontal
-                then x' == x1 && (isBetween y1 y2 y')
-                else y' == y1 && (isBetween x1 x2 x')
+                then y' == y1 && (isBetween x1 x2 x')
+                else x' == x1 && (isBetween y1 y2 y')
+    lengthToPoint w p = if pointIntersects w p then Just (manhattanDist (origin w) p) else Nothing
 
 data Wire = Wire [WireSegment]
     deriving Eq
@@ -103,6 +109,15 @@ instance Path Wire where
     intersections (Wire as) (Wire bs) = delete originP (concat (allTwoArgOutputs as bs intersections))
     len (Wire ws) = sum (map len ws)
     pointIntersects (Wire ws) p = any ((flip pointIntersects) p) ws
+    lengthToPoint (Wire ws) p =
+        let lengthToPoint' w d = case lengthToPoint w p of
+                Just n -> Left (d + n)
+                Nothing -> Right (d + len w)
+            in let lengthToPointAccum a w = case a of
+                    Left n -> Left n
+                    Right d -> lengthToPoint' w d
+            in leftToMaybe $ foldl lengthToPointAccum (Right 0) ws
+            
 
 originP :: Point
 originP = Pt 0 0
@@ -162,17 +177,36 @@ fromPath = extendPath newWire
 fromPathStr :: String -> Wire
 fromPathStr = fromPath . (splitOn ',')
 
-manhattanDist :: Point -> Int
-manhattanDist (Pt x y) = (abs x) + (abs y)
+manhattanDist :: Point -> Point -> Int
+manhattanDist (Pt x1 y1) (Pt x2 y2) = (abs (x1 - x2)) + (abs (y1 - y2))
 
 tipDistance :: Path a => a -> Int
-tipDistance = manhattanDist . tip
+tipDistance = (manhattanDist originP) . tip
 
 closestIntersectionDist :: Path a => a -> a -> Int
-closestIntersectionDist a b = foldr1 min $ map manhattanDist (intersections a b)
+closestIntersectionDist a b = foldr1 min $ map (manhattanDist originP) (intersections a b)
 
-smallestIntersectDistOfPaths :: String -> String -> Int
-smallestIntersectDistOfPaths a b = 
+lowestInstersectionLength :: Path a => a -> a -> Int
+lowestInstersectionLength a b = 
+    let ps = intersections a b
+        totalLength p = (lengthToPoint a p) `addMaybe` (lengthToPoint b p) in
+            foldr1 min $ catMaybes $ map totalLength ps
+
+wireFuncOfPaths :: (Wire -> Wire -> a) -> String -> String -> a
+wireFuncOfPaths f a b = 
     let x = fromPathStr a
         y = fromPathStr b in
-        closestIntersectionDist x y
+        f x y
+
+smallestIntersectDistOfPaths :: String -> String -> Int
+smallestIntersectDistOfPaths = wireFuncOfPaths closestIntersectionDist
+
+lowestIntersectionLengthOfPaths :: String -> String -> Int
+lowestIntersectionLengthOfPaths = wireFuncOfPaths lowestInstersectionLength
+
+-- >>> len $ fromPathStr "U100,L10,D40,R20"
+-- >>> x = fromPathStr "U100,L10,D40,R20"
+-- >>> lengthToPoint x $ tip $ fromPathStr "U100,L10,D40,R20"
+-- 170
+-- Just 20
+--

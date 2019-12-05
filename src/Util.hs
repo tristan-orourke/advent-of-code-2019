@@ -11,7 +11,12 @@ module Util
         isBetween,
         allTwoArgOutputs,
         allTuples,
+        leftToMaybe,
+        maybeToLeft,
+        addMaybe
     ) where
+
+import Data.Maybe
 
 strToInt :: String -> Int
 strToInt = read
@@ -70,3 +75,18 @@ allTuples :: [a] -> [b] -> [(a, b)]
 allTuples as bs = 
     let toTuple a b = (a, b) in
         allTwoArgOutputs as bs toTuple
+
+leftToMaybe :: Either a b -> Maybe a
+leftToMaybe e = case e of
+    Left a -> Just a
+    Right _ -> Nothing
+
+maybeToLeft :: b -> Maybe a -> Either a b
+maybeToLeft x m = case m of
+    Just a -> Left a
+    Nothing -> Right x
+
+addMaybe :: Num a => Maybe a -> Maybe a -> Maybe a
+addMaybe a b = if (isNothing a) || (isNothing b) 
+    then Nothing
+    else Just ((fromJust a) + (fromJust b))
