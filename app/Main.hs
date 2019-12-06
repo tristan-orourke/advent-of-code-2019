@@ -20,12 +20,12 @@ day1Part2 :: [Int] -> Int
 day1Part2 = sum . map calcFuelRec
 
 day2Part1 :: [Int] -> Int
-day2Part1 = intcodeOutput . (runWithNounVerb 12 2)
+day2Part1 = head . (runWithNounVerb 12 2)
 
 day2Part2 :: [Int] -> Int -> Int
 day2Part2 m t = 
     let transformNounVerb (n, v) = 100 * n + v in
-        let f n v = intcodeOutput (runWithNounVerb n v m) in
+        let f n v = head (runWithNounVerb n v m) in
             maybe 0 transformNounVerb (findArgsForTargetOutput [0..99] [0..99] f t)
 
 day3Part1 :: [String] -> Int
