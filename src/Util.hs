@@ -87,3 +87,12 @@ addMaybe = liftA2 (+)
 digits :: Integral x => x -> [x]
 digits 0 = []
 digits x = digits (x `div` 10) ++ [x `mod` 10] 
+
+intOfDigits :: [Int] -> Int
+intOfDigits xs = 
+    let 
+        intOfDigits' :: Int -> [Int] -> Int
+        intOfDigits' t xs = case xs of
+            [] -> t
+            (d:ds) -> intOfDigits' (t+d) (map (*10) ds)
+        in intOfDigits' 0 (reverse xs)

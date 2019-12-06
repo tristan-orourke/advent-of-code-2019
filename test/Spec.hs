@@ -23,11 +23,6 @@ main = hspec $ do
             calcFuelRec 1969 `shouldBe` 966
         it "100756 returns 50346" $
             calcFuelRec 100756 `shouldBe` 50346
-    describe "readPointerAtPointer" $ do
-        it "1 of 2,3,0,3,99 is 3" $
-            readPointerAtPointer [2,3,0,3,99] 1 `shouldBe` 3
-        it "2 of 2,3,0,3,99 is 2" $
-            readPointerAtPointer [2,3,0,3,99] 2 `shouldBe` 2
     describe "runIntcode" $ do
         it "1,0,0,0,99 becomes 2,0,0,0,99" $
             runIntcode [1,0,0,0,99] `shouldBe` [2,0,0,0,99]
