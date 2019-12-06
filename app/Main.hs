@@ -4,6 +4,7 @@ import Util
 import Lib
 import Intcode
 import Wires
+import Passwords
 import Text.Printf
 import Text.Show
 
@@ -21,7 +22,6 @@ day1Part2 = sum . map calcFuelRec
 day2Part1 :: [Int] -> Int
 day2Part1 = intcodeOutput . (runWithNounVerb 12 2)
 
-
 day2Part2 :: [Int] -> Int -> Int
 day2Part2 m t = 
     let transformNounVerb (n, v) = 100 * n + v in
@@ -32,6 +32,11 @@ day3Part1 :: [String] -> Int
 day3Part1 xs = smallestIntersectDistOfPaths (xs !! 0) (xs !! 1)
 day3Part2 :: [String] -> Int
 day3Part2 xs = lowestIntersectionLengthOfPaths (xs !! 0) (xs !! 1)
+
+day4Part1 :: Int -> Int -> Int
+day4Part1 min max = countValidInRange min max
+day4Part2 :: Int -> Int -> Int
+day4Part2 min max = countValidStrictInRange min max
 
 main :: IO ()
 main = do
@@ -44,3 +49,5 @@ main = do
     input3 <- readFile "data/day3.txt"
     printAnswer 3 1 (day3Part1 (lines input3))
     printAnswer 3 2 (day3Part2 (lines input3))
+    printAnswer 4 1 (day4Part1  158126 624574)
+    printAnswer 4 2 (day4Part2  158126 624574)

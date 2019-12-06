@@ -86,4 +86,4 @@ addMaybe = liftA2 (+)
 
 digits :: Integral x => x -> [x]
 digits 0 = []
-digits x = digits (x `div` 10) ++ [x `mod` 10]
+digits x = digits (x `div` 10) ++ [x `mod` 10] 

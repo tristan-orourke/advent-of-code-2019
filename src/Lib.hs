@@ -29,4 +29,3 @@ findArgsForTargetOutput :: Eq c => [a] -> [b] -> (a -> b -> c) -> c -> Maybe (a,
 findArgsForTargetOutput as bs f t = 
     let f' = uncurry f in
         findInputForTargetOutput f' t (allTuples as bs) 
-

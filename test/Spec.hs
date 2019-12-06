@@ -3,6 +3,7 @@ import Lib
 import Intcode
 import Wires
 import Util
+import Passwords
 
 main :: IO ()
 main = hspec $ do 
@@ -71,4 +72,20 @@ main = hspec $ do
         it "is 410 for R98,U47,R26,D63,R33,U87,L62,D20,R33,U53,R51 and U98,R91,D20,R16,D67,R40,U7,R15,U6,R7" $
             lowestIntersectionLengthOfPaths "R98,U47,R26,D63,R33,U87,L62,D20,R33,U53,R51" "U98,R91,D20,R16,D67,R40,U7,R15,U6,R7"
                 `shouldBe` 410
+
+    describe "Passwords.isValid" $ do
+        it "111111 is valid, assuming in range" $
+            isValid 111111 `shouldBe` True
+        it "223450 is not valid, because it has decreasing digits" $
+            isValid 223450 `shouldBe` False
+        it "123789 is not valid, because it has no doubles" $
+            isValid 123789 `shouldBe` False
+    describe "Passwords.isValidStrict" $ do
+        it "112233 is valid, because all adjacent sets are length 2" $
+            isValidStrict 112233 `shouldBe` True
+        it "123444 is not valid, because 44 is part of a larger group" $
+            isValidStrict 123444 `shouldBe` False
+        it "111122 is valid, because it has still contains a double 2" $
+            isValidStrict 111122 `shouldBe` True
+
         
