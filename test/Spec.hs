@@ -23,6 +23,7 @@ main = hspec $ do
             calcFuelRec 1969 `shouldBe` 966
         it "100756 returns 50346" $
             calcFuelRec 100756 `shouldBe` 50346
+    
     describe "runIntcode" $ do
         it "1,0,0,0,99 becomes 2,0,0,0,99" $
             runIntcode [1,0,0,0,99] `shouldBe` [2,0,0,0,99]
@@ -32,6 +33,7 @@ main = hspec $ do
             runIntcode [2,4,4,5,99,0] `shouldBe` [2,4,4,5,99,9801]
         it "1,1,1,4,99,5,6,0,99 becomes 30,1,1,4,2,5,6,0,99" $
             runIntcode [1,1,1,4,99,5,6,0,99] `shouldBe` [30,1,1,4,2,5,6,0,99]
+    
     describe "Wires.extendPathSeg" $ do
         it "Extend newWire by U3 gives [(0,3)(0,0)]" $
             toCoords (extendPathSeg "U3" newWire) `shouldBe` [(0,3)]

@@ -15,72 +15,118 @@ data Program = Program  { memory :: [Int]
                         , halt :: Bool
                         } deriving (Show, Eq)
 
-readMemf :: (Int -> Int) -> Program -> Int
-readMemf f pro = 
-    let (m, p) = (memory pro, pointer pro) in
-        m !! (f p)
+setMem :: Int -> Int -> Program -> Program
+setMem i v pro = 
+    let m = memory pro in
+        pro { memory = replaceAt m i v}
 
-readMem :: Program -> Int
-readMem = readMemf id
+movePointer :: Int -> Program -> Program
+movePointer n pro =
+    let p = pointer pro in
+        pro { pointer = (p + n) }
 
-data ParameterMode = Position | Immediate
+data ParameterMode = Position | Immediate deriving (Show, Eq)
 readParamValue :: ParameterMode -> [Int] -> Int -> Int
 readParamValue mode m p = 
     case mode of
         Position -> m !! (m !! p)
         Immediate -> m !! p
 
-readPosValue :: [Int] -> Int -> Int
-readPosValue = readParamValue Position
+paramModeOfDigit :: Int -> ParameterMode
+paramModeOfDigit 0 = Position
+paramModeOfDigit 1 = Immediate
+paramModeOfDigit _ = error "Not a valid Parameter Mode code"
 
-nextParamMode :: [Int] -> ParameterMode
-nextParamMode [] = Position
-nextParamMode (0:_) = Position
-nextParamMode (1:_) = Immediate
-nextParamMode _ = error "Not a valid Parameter Mode code"
+paramModesOfInts :: Int -> [Int] -> [ParameterMode]
+paramModesOfInts n xs = map paramModeOfDigit $ reverse $ lpad 0 n xs
 
-opFunc :: (Int -> Int -> Int) -> Program -> Program
-opFunc f program =
-    let p = pointer program
-        m = memory program in
-        let (a, b) = (readPosValue m (p+1), readPosValue m (p + 2)) in
-            let newMem = replaceAt m (m !! (p+3)) (f a b) in
-                program { memory=newMem, pointer=(p+4) }
-
-opAdd :: Program -> Program
-opAdd = opFunc (+)
-
-opMult :: Program -> Program
-opMult = opFunc (*)
-
-opEnd :: Program -> Program
-opEnd p = p { pointer=(pointer p + 1), halt=True }
-
--- instrValues :: Program -> [Int]
--- instrValues pro = 
---     let ()
-
-splitIntoParamsAndOpcode :: Int -> ([Int], Int)
+splitIntoParamsAndOpcode :: Int -> ([ParameterMode], Int)
 splitIntoParamsAndOpcode d = 
+    let ds = digits d in
+        let (xs, ys) = splitAt (length ds - 2) ds in
+            (map paramModeOfDigit $ reverse $ lpad 0 3 xs, intOfDigits ys)
+
+splitAtOpcode :: Int -> ([Int], Int)
+splitAtOpcode d = 
     let ds = digits d in
         let (xs, ys) = splitAt (length ds - 2) ds in
             (xs, intOfDigits ys)
 
-currentOpcode :: Program -> Int
-currentOpcode pro = 
-    let (_, x) = splitIntoParamsAndOpcode (readMem pro) in x
+
+class Instruction a where
+    len :: a -> Int
+    values :: a -> [Int]
+    paramModes :: a -> [ParameterMode]
+    readParamValues :: a -> [Int] -> [Int]
+    opcode :: a -> Int
+
+data Instr = Add Int Int Int Int
+            | Mult Int Int Int Int
+            | End
+    deriving (Show, Eq)
+
+instance Instruction Instr where
+    len (Add _ _ _ _) = 4
+    len (Mult _ _ _ _) = 4
+    len (End) = 1
+    values (Add _ a b c) = [a,b,c]
+    values (Mult _ a b c) = [a,b,c]
+    values (End) = []
+    paramModes i = case i of
+        (Add x _ _ _) -> let (xs, _) = splitAtOpcode x in
+                            paramModesOfInts (len i) xs
+        (Mult x _ _ _) -> let (xs, _) = splitAtOpcode x in
+                            paramModesOfInts (len i) xs
+        (End) -> []
+    readParamValues a m = 
+        let readParamValue' m mode x = case mode of
+                Position -> m !! x
+                Immediate -> x
+            in zipWith (readParamValue' m) (paramModes a) (values a) 
+    opcode (Add _ _ _ _) = 1
+    opcode (Mult _ _ _ _) = 2
+    opcode End = 99
+
+runInstr :: Instr -> Program -> Program
+runInstr i pro = 
+    let m = memory pro in
+        case i of
+            Add _ _ _ c -> 
+                let [a, b, _] = readParamValues i m in
+                    setMem c (a + b) $ movePointer (len i) pro
+            Mult _ _ _ c -> 
+                let [a, b, _] = readParamValues i m in
+                    setMem c (a * b) $ movePointer (len i) pro
+            End -> movePointer (len i) (pro {halt = True})
+
+currentInstr :: Program -> Instr
+currentInstr pro = 
+    let (m, p) = (memory pro, pointer pro) in
+        let (_, x) = splitIntoParamsAndOpcode (m !! p) 
+            [a, b, c, d] = take 4 $ snd $ splitAt p m
+            in case x of
+                1 -> Add a b c d
+                2 -> Mult a b c d
+                99 -> End
+                _ -> End
+
+-- >>> x = initProgram 1 [1,0,0,0,99]
+-- >>> x
+-- >>> i = currentInstr x
+-- >>> splitIntoParamsAndOpcode 1
+-- >>> runProgramStep x
+-- >>> readParamValues i (memory x)
+-- Program {memory = [1,0,0,0,99], pointer = 0, input = 1, output = [], halt = False}
+-- ([Position,Position,Position],1)
+-- Program {memory = [1,2,0,0,99], pointer = 4, input = 1, output = [], halt = False}
+-- [1,1,1]
+--
 
 runProgramStep :: Program -> Program
 runProgramStep pro = 
     if halt pro 
         then pro
-        else
-    let (paramModes, opcode) = splitIntoParamsAndOpcode (readMem pro) in
-        case opcode of
-            1 -> opAdd pro
-            2 -> opMult pro
-            99 -> opEnd pro
-            _ -> opEnd pro
+        else runInstr (currentInstr pro) pro
 
 runIntcodeProgram :: Program -> Program
 runIntcodeProgram pro = 

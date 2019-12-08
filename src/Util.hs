@@ -37,8 +37,8 @@ zeroIfNegative :: Int -> Int
 zeroIfNegative = max 0
 
 replaceAt :: [a] -> Int -> a -> [a]
-replaceAt l pos v = 
-    let (x, y) = splitAt pos l
+replaceAt xs pos v = 
+    let (x, y) = splitAt pos xs
     in x ++ v : (drop 1 y)
 
 replaceIn :: a -> Int -> [a] -> [a]
@@ -96,3 +96,21 @@ intOfDigits xs =
             [] -> t
             (d:ds) -> intOfDigits' (t+d) (map (*10) ds)
         in intOfDigits' 0 (reverse xs)
+
+safeL :: ([a] -> [a]) -> [a] -> [a]
+safeL _ [] = []
+safeL f xs = f xs
+
+safeTail :: [a] -> [a]
+safeTail = safeL tail
+
+safeInit :: [a] -> [a]
+safeInit = safeL init
+
+lpad :: a -> Int -> [a] -> [a]
+lpad p n xs = replicate (n - length ys) p ++ ys
+    where ys = take n xs
+
+-- >>> lpad 'a' 10 "hello"
+-- "aaaaahello"
+--
