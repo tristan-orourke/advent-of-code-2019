@@ -33,6 +33,12 @@ main = hspec $ do
             runIntcode [2,4,4,5,99,0] `shouldBe` [2,4,4,5,99,9801]
         it "1,1,1,4,99,5,6,0,99 becomes 30,1,1,4,2,5,6,0,99" $
             runIntcode [1,1,1,4,99,5,6,0,99] `shouldBe` [30,1,1,4,2,5,6,0,99]
+        it "1002,4,3,4,33 becomes 1002,4,3,4,99" $
+            runIntcode [1002,4,3,4,33] `shouldBe` [1002,4,3,4,99]
+        it "1101,100,-1,4,0 becomes 1101,100,-1,4,99" $
+            runIntcode [1101,100,(-1),4,0] `shouldBe` [1101,100,(-1),4,99]
+        it "3,3,99,0 becomes 3,3,99,1" $
+            runIntcode [3,3,99,0] `shouldBe` [3,3,99,1]
     
     describe "Wires.extendPathSeg" $ do
         it "Extend newWire by U3 gives [(0,3)(0,0)]" $

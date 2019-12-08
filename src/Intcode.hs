@@ -60,23 +60,33 @@ class Instruction a where
     readParamValues :: a -> [Int] -> [Int]
     opcode :: a -> Int
 
+-- Opcode 3 takes a single integer as input and saves it to the position 
+-- given by its only parameter. 
+-- For example, the instruction 3,50 would take an input value 
+-- and store it at address 50.
+
 data Instr = Add Int Int Int Int
             | Mult Int Int Int Int
+            | FromInput Int Int
             | End
+
     deriving (Show, Eq)
 
 instance Instruction Instr where
     len (Add _ _ _ _) = 4
     len (Mult _ _ _ _) = 4
+    len (FromInput _ _) = 2
     len (End) = 1
     values (Add _ a b c) = [a,b,c]
     values (Mult _ a b c) = [a,b,c]
+    values (FromInput _ a) = [a]
     values (End) = []
     paramModes i = case i of
         (Add x _ _ _) -> let (xs, _) = splitAtOpcode x in
                             paramModesOfInts (len i) xs
         (Mult x _ _ _) -> let (xs, _) = splitAtOpcode x in
                             paramModesOfInts (len i) xs
+        (FromInput _ _) -> [Immediate]
         (End) -> []
     readParamValues a m = 
         let readParamValue' m mode x = case mode of
@@ -85,6 +95,7 @@ instance Instruction Instr where
             in zipWith (readParamValue' m) (paramModes a) (values a) 
     opcode (Add _ _ _ _) = 1
     opcode (Mult _ _ _ _) = 2
+    opcode (FromInput _ _) = 3
     opcode End = 99
 
 runInstr :: Instr -> Program -> Program
@@ -97,6 +108,8 @@ runInstr i pro =
             Mult _ _ _ c -> 
                 let [a, b, _] = readParamValues i m in
                     setMem c (a * b) $ movePointer (len i) pro
+            FromInput _ a ->
+                setMem a (input pro) $ movePointer (len i) pro
             End -> movePointer (len i) (pro {halt = True})
 
 currentInstr :: Program -> Instr
@@ -107,6 +120,7 @@ currentInstr pro =
             in case x of
                 1 -> Add a b c d
                 2 -> Mult a b c d
+                3 -> FromInput a b
                 99 -> End
                 _ -> End
 
