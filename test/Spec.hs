@@ -52,7 +52,54 @@ main = hspec $ do
             outputOfRunProgram 3 [3,9,7,9,10,9,4,9,99,-1,8] `shouldBe` 1
         it "3,9,7,9,10,9,4,9,99,-1,8 outputs False if input doesn't equal 8" $
             outputOfRunProgram 8 [3,9,7,9,10,9,4,9,99,-1,8] `shouldBe` 0
-        -- TODO: add tests for day 5 part 2
+        it "3,3,1108,-1,8,3,4,3,99 outputs True if input equals 8" $
+            outputOfRunProgram 8 [3,3,1108,-1,8,3,4,3,99] `shouldBe` 1
+        it "3,3,1108,-1,8,3,4,3,99 outputs False if input not equals 8" $
+            outputOfRunProgram 9 [3,3,1108,-1,8,3,4,3,99] `shouldBe` 0
+        it "3,3,1107,-1,8,3,4,3,99 outputs True if input < 8" $
+            outputOfRunProgram (-4) [3,3,1107,-1,8,3,4,3,99] `shouldBe` 1
+        it "3,3,1107,-1,8,3,4,3,99 outputs False if input >= 8" $
+            outputOfRunProgram 100 [3,3,1107,-1,8,3,4,3,99] `shouldBe` 0
+        it "3,12,6,12,15,1,13,14,13,4,13,99,-1,0,1,9 outputs 1 if input non-zero" $
+            outputOfRunProgram (-1) [3,12,6,12,15,1,13,14,13,4,13,99,-1,0,1,9] `shouldBe` 1
+        it "3,12,6,12,15,1,13,14,13,4,13,99,-1,0,1,9 outputs 0 if input zero" $
+            outputOfRunProgram 0 [3,12,6,12,15,1,13,14,13,4,13,99,-1,0,1,9] `shouldBe` 0
+        it "3,3,1105,-1,9,1101,0,0,12,4,12,99,1 outputs 1 if input non-zero" $
+            outputOfRunProgram 1 [3,3,1105,-1,9,1101,0,0,12,4,12,99,1] `shouldBe` 1
+        it "3,3,1105,-1,9,1101,0,0,12,4,12,99,1 outputs 0 if input zero" $
+            outputOfRunProgram 0 [3,3,1105,-1,9,1101,0,0,12,4,12,99,1] `shouldBe` 0
+        it "3,21,1008,21,8,20,1005,20,22,107,8,21,20,1006,20,31,1106,0,36,98,0,0,1002,21,125,20,4,20,1105,1,46,104,999,1105,1,46,1101,1000,1,20,4,20,1105,1,46,98,99\
+            \outputs 999 if input < 8" $
+            outputOfRunProgram 7 [3,21,1008,21,8,20,1005,20,22,107,8,21,20,1006,20,31,1106,0,36,98,0,0,1002,21,125,20,4,20,1105,1,46,104,999,1105,1,46,1101,1000,1,20,4,20,1105,1,46,98,99] 
+            `shouldBe` 999
+        it "3,21,1008,21,8,20,1005,20,22,107,8,21,20,1006,20,31,1106,0,36,98,0,0,1002,21,125,20,4,20,1105,1,46,104,999,1105,1,46,1101,1000,1,20,4,20,1105,1,46,98,99\
+            \outputs 1000 if input == 8" $
+            outputOfRunProgram 8 [3,21,1008,21,8,20,1005,20,22,107,8,21,20,1006,20,31,1106,0,36,98,0,0,1002,21,125,20,4,20,1105,1,46,104,999,1105,1,46,1101,1000,1,20,4,20,1105,1,46,98,99] 
+            `shouldBe` 1000
+        it "3,21,1008,21,8,20,1005,20,22,107,8,21,20,1006,20,31,1106,0,36,98,0,0,1002,21,125,20,4,20,1105,1,46,104,999,1105,1,46,1101,1000,1,20,4,20,1105,1,46,98,99\
+            \outputs 1001 if input > 8" $
+            outputOfRunProgram 99 [3,21,1008,21,8,20,1005,20,22,107,8,21,20,1006,20,31,1106,0,36,98,0,0,1002,21,125,20,4,20,1105,1,46,104,999,1105,1,46,1101,1000,1,20,4,20,1105,1,46,98,99] 
+            `shouldBe` 1001
+        describe "JumpIfTrue instr" $ do
+            it "1005,0,6,4,9,99,4,10,99,42,25 should ouptput 25" $
+                outputOfRunProgram 1 [1005,0,6,4,9,99,4,10,99,42,25] `shouldBe` 25
+            it "1105,0,6,4,9,99,4,10,99,42,25 should ouptput 42" $
+                outputOfRunProgram 1 [1105,0,6,4,9,99,4,10,99,42,25] `shouldBe` 42
+        describe "JumpIfFalse instr" $ do
+            it "1005,0,6,4,9,99,4,10,99,42,25 should ouptput 25" $
+                outputOfRunProgram 1 [1006,0,6,4,9,99,4,10,99,42,25] `shouldBe` 42
+            it "1105,0,6,4,9,99,4,10,99,42,25 should ouptput 42" $
+                outputOfRunProgram 1 [1106,0,6,4,9,99,4,10,99,42,25] `shouldBe` 25
+        describe "LessThan instr" $ do
+            it "1107,0,1,5,104,-1,99 should output 1" $
+                outputOfRunProgram 1 [1107,0,1,5,104,-1,99 ] `shouldBe` 1
+            it "7,0,1,5,104,-1,99  should output 0" $
+                outputOfRunProgram 1 [7,0,1,5,104,-1,99 ] `shouldBe` 0
+        describe "Equals instr" $ do
+            it "1108,3,5,5,104,-1,99 should output 0" $
+                outputOfRunProgram 1 [1108,3,5,5,104,-1,99 ] `shouldBe` 0
+            it "1008,3,5,5,104,-1,99  should output 1" $
+                outputOfRunProgram 1 [1008,3,5,5,104,-1,99 ] `shouldBe` 1
     
     describe "Wires.extendPathSeg" $ do
         it "Extend newWire by U3 gives [(0,3)(0,0)]" $

@@ -154,32 +154,49 @@ runInstr i pro =
                     if a == 0 then pro { pointer=b } else shiftPointer (len i) pro
             LessThan x _ _ c -> 
                 let [a, b, _] = readParamValues i m in
-                    if a < 0 
-                        then setMem c 1 $ shiftPointer (len i) pro 
-                        else shiftPointer (len i) pro
+                    let y = if a < b then 1 else 0 in
+                        setMem c y $ shiftPointer (len i) pro 
             Equals x _ _ c ->
                  let [a, b, _] = readParamValues i m in
-                    if a == b 
-                        then setMem c 1 $ shiftPointer (len i) pro 
-                        else shiftPointer (len i) pro
+                   let y = if a == b then 1 else 0 in
+                        setMem c y $ shiftPointer (len i) pro 
             End -> shiftPointer (len i) (pro {halt = True})
 
 currentInstr :: Program -> Instr
 currentInstr pro = 
     let (m, p) = (memory pro, pointer pro) in
         let (_, x) = splitIntoParamsAndOpcode (m !! p) 
-            [a, b, c, d] = take 4 $ snd $ splitAt p m
+            xs = snd $ splitAt p m
             in case x of
-                1 -> Add a b c d
-                2 -> Mult a b c d
-                3 -> FromInput a b
-                4 -> ToOutput a b
-                5 -> JumpIfTrue a b c
-                6 -> JumpIfFalse a b c
-                7 -> LessThan a b c d
-                8 -> Equals a b c d
+                1 -> uncurry4 Add (tuplify4 $ take 4 xs)
+                2 -> uncurry4 Mult (tuplify4 $ take 4 xs)
+                3 -> uncurry FromInput (tuplify2 $ take 2 xs)
+                4 -> uncurry ToOutput (tuplify2 $ take 2 xs)
+                5 -> uncurry3 JumpIfTrue $ tuplify3 $ take 3 $ snd $ splitAt p m
+                6 -> uncurry3 JumpIfFalse $ tuplify3 $ take 3 $ snd $ splitAt p m
+                7 -> uncurry4 LessThan (tuplify4 $ take 4 xs)
+                8 -> uncurry4 Equals (tuplify4 $ take 4 xs)
                 99 -> End
                 _ -> End
+
+-- >>> x = [1107,0,1,5,104,-1,99 ]
+-- >>> y = [7,0,1,5,104,-1,99 ]
+-- >>> p = initProgram 1 y
+-- >>> p
+-- >>> readParamValues (currentInstr p) (memory p)
+-- >>> currentInstr p
+-- >>> runProgramStep p
+-- >>> (runProgramStep . runProgramStep) p
+-- >>> (runProgramStep . runProgramStep . runProgramStep) p
+-- >>> outputOfRunProgram 1 y
+-- Program {memory = [7,0,1,5,104,-1,99], pointer = 0, input = 1, output = [], halt = False}
+-- [7,0,-1]
+-- LessThan 7 0 1 5
+-- Program {memory = [7,0,1,5,104,-1,99], pointer = 4, input = 1, output = [], halt = False}
+-- Program {memory = [7,0,1,5,104,-1,99], pointer = 6, input = 1, output = [-1], halt = False}
+-- Program {memory = [7,0,1,5,104,-1,99], pointer = 7, input = 1, output = [-1], halt = True}
+-- -1
+--
 
 runProgramStep :: Program -> Program
 runProgramStep pro = 

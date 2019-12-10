@@ -118,3 +118,18 @@ minMaybe :: Ord a => [Maybe a] -> Maybe a
 minMaybe ms = case catMaybes ms of
     [] -> Nothing
     xs -> Just (minimum xs)
+
+tuplify2 :: [a] -> (a,a)
+tuplify2 [x,y] = (x,y)
+
+tuplify3 :: [a] -> (a,a,a)
+tuplify3 [x,y,z] = (x,y,z)
+
+tuplify4 :: [a] -> (a,a,a,a)
+tuplify4 [w,x,y,z] = (w,x,y,z)
+
+uncurry3 :: (a -> a -> a -> b) -> (a,a,a) -> b
+uncurry3 f (x,y,z) = f x y z
+
+uncurry4 :: (a -> a -> a -> a -> b) -> (a,a,a,a) -> b
+uncurry4 f (w,x,y,z) = f w x y z
