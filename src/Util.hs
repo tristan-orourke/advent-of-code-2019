@@ -90,3 +90,8 @@ addMaybe = liftA2 (+)
 digits :: Integral x => x -> [x]
 digits 0 = []
 digits x = digits (x `div` 10) ++ [x `mod` 10] 
+
+minMaybe :: Ord a => [Maybe a] -> Maybe a
+minMaybe ms = case catMaybes ms of
+    [] -> Nothing
+    xs -> Just (minimum xs)

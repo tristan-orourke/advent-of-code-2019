@@ -102,5 +102,8 @@ main = hspec $ do
     describe "Orbits.totalDirectIndirectOrbits" $ do
         it "[COM)B,B)C,C)D,D)E,E)F,B)G,G)H,D)I,E)J,J)K,K)L] should be 42 total orbits" $
             totalDirectIndirectOrbits ["COM)B","B)C","C)D","D)E","E)F","B)G","G)H","D)I","E)J","J)K","K)L"] `shouldBe` 42
+    describe "Orbits.countOrbitJumps" $ do
+        it "COM)B,B)C,C)D,D)E,E)F,B)G,G)H,D)I,E)J,J)K,K)L,K)YOU,I)SAN should be 4 jumps" $
+            countOrbitJumps "YOU" "SAN" ["COM)B","B)C","C)D","D)E","E)F","B)G","G)H","D)I","E)J","J)K","K)L","K)YOU","I)SAN"] `shouldBe` 4
 
         

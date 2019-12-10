@@ -4,6 +4,7 @@ module Tree (
 ) where
 
 import Data.Tree
+import Util
 
 treeHas :: Eq a => a -> Tree a -> Bool
 treeHas x (Node a ts) = (x == a) || any (treeHas x) ts
@@ -48,6 +49,19 @@ countEdges t =
     let countEdges' d (Node _ ts) = d + sum (map (countEdges' (d+1)) ts) 
         in countEdges' 0 t
 
+depthOf :: Ord a => a -> Tree a -> Maybe Int
+depthOf x (Node a []) = if a == x then Just 0 else Nothing
+depthOf x (Node a ts) = if a == x 
+    then Just 0
+    else ((+) 1) <$> (minMaybe $ map (depthOf x) ts)
+
+minDistanceT :: Ord a => a -> a -> Tree a -> Maybe Int
+minDistanceT a b t = 
+    let d = (+) <$> (depthOf a t) <*> (depthOf b t)
+        ds = map (minDistanceT a b) (subForest t) in
+            minMaybe (d:ds)
+
+
 -- >>> t = Node 1 [Node 2 [], Node 3 [Node 4 [], Node 5 []]]
 -- >>> t
 -- >>> treeHas 3 t
@@ -62,7 +76,7 @@ countEdges t =
 -- >>> insertTM y t
 -- >>> printForest t = putStr $ drawForest $ map (fmap show) t
 -- >>> printTree t = putStr $ drawTree $ fmap show t
--- >>> printTree t
+-- >>> minDistanceT 2 5 t
 -- Node {rootLabel = 1, subForest = [Node {rootLabel = 2, subForest = []},Node {rootLabel = 3, subForest = [Node {rootLabel = 4, subForest = []},Node {rootLabel = 5, subForest = []}]}]}
 -- True
 -- False
@@ -70,13 +84,5 @@ countEdges t =
 -- True
 -- Nothing
 -- Just (Node {rootLabel = 1, subForest = [Node {rootLabel = 2, subForest = []},Node {rootLabel = 3, subForest = [Node {rootLabel = 10, subForest = []},Node {rootLabel = 6, subForest = [Node {rootLabel = 7, subForest = []}]},Node {rootLabel = 4, subForest = []},Node {rootLabel = 5, subForest = []}]}]})
--- 1
--- |
--- +- 2
--- |
--- `- 3
---    |
---    +- 4
---    |
---    `- 5
+-- Just 3
 --
