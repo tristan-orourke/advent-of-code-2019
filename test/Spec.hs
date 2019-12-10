@@ -41,6 +41,8 @@ main = hspec $ do
             runIntcode [1101,100,(-1),4,0] `shouldBe` [1101,100,(-1),4,99]
         it "3,3,99,0 becomes 3,3,99,1" $
             runIntcode [3,3,99,0] `shouldBe` [3,3,99,1]
+        it "4,3,99,6 outputs 6" $
+            outputOfRunProgram [4,3,99,6] `shouldBe` 6
     
     describe "Wires.extendPathSeg" $ do
         it "Extend newWire by U3 gives [(0,3)(0,0)]" $

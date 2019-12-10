@@ -22,7 +22,6 @@ day1Part2 = sum . map calcFuelRec
 
 day2Part1 :: [Int] -> Int
 day2Part1 = head . (runWithNounVerb 12 2)
-
 day2Part2 :: [Int] -> Int -> Int
 day2Part2 m t = 
     let transformNounVerb (n, v) = 100 * n + v in
@@ -39,6 +38,9 @@ day4Part1 min max = countValidInRange min max
 day4Part2 :: Int -> Int -> Int
 day4Part2 min max = countValidStrictInRange min max
 
+day5Part1 :: [Int] -> Int
+day5Part1 = outputOfRunProgram
+
 day6Part1:: [String] -> Int
 day6Part1 = totalDirectIndirectOrbits
 day6Part2 :: [String] -> Int
@@ -52,11 +54,13 @@ main = do
     input2 <- intRowFromFile "data/day2.txt"
     printAnswer 2 1 (day2Part1 input2)
     printAnswer 2 2 (day2Part2 input2 19690720)
-    input3 <- readFile "data/day3.txt"
-    printAnswer 3 1 (day3Part1 (lines input3))
-    printAnswer 3 2 (day3Part2 (lines input3))
+    input3 <- strLinesFromFile "data/day3.txt"
+    printAnswer 3 1 (day3Part1 input3)
+    printAnswer 3 2 (day3Part2 input3)
     printAnswer 4 1 (day4Part1  158126 624574)
     printAnswer 4 2 (day4Part2  158126 624574)
+    input5 <- intRowFromFile "data/day5.txt"
+    printAnswer 5 1 (day5Part1 input5)
     input6 <- strLinesFromFile "data/day6.txt"
     printAnswer 6 1 (day6Part1 input6)
     printAnswer 6 2 (day6Part2 input6)

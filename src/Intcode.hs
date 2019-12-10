@@ -2,6 +2,7 @@ module Intcode
     (
         runIntcode,
         runWithNounVerb,
+        outputOfRunProgram,
     ) where
 
 import Util
@@ -24,6 +25,11 @@ movePointer :: Int -> Program -> Program
 movePointer n pro =
     let p = pointer pro in
         pro { pointer = (p + n) }
+
+addOutput :: Int -> Program -> Program
+addOutput v pro = 
+    let o = output pro in
+        pro { output = (v:o) }
 
 data ParameterMode = Position | Immediate deriving (Show, Eq)
 readParamValue :: ParameterMode -> [Int] -> Int -> Int
@@ -68,6 +74,7 @@ class Instruction a where
 data Instr = Add Int Int Int Int
             | Mult Int Int Int Int
             | FromInput Int Int
+            | ToOutput Int Int
             | End
 
     deriving (Show, Eq)
@@ -76,17 +83,21 @@ instance Instruction Instr where
     len (Add _ _ _ _) = 4
     len (Mult _ _ _ _) = 4
     len (FromInput _ _) = 2
+    len (ToOutput _ _) = 2
     len (End) = 1
     values (Add _ a b c) = [a,b,c]
     values (Mult _ a b c) = [a,b,c]
     values (FromInput _ a) = [a]
+    values (ToOutput _ a) = [a]
     values (End) = []
     paramModes i = case i of
         (Add x _ _ _) -> let (xs, _) = splitAtOpcode x in
-                            paramModesOfInts (len i) xs
+                            paramModesOfInts (len i - 1) xs
         (Mult x _ _ _) -> let (xs, _) = splitAtOpcode x in
-                            paramModesOfInts (len i) xs
+                            paramModesOfInts (len i - 1) xs
         (FromInput _ _) -> [Immediate]
+        (ToOutput x _) -> let (xs, _) = splitAtOpcode x in
+                            paramModesOfInts (len i - 1) xs
         (End) -> []
     readParamValues a m = 
         let readParamValue' m mode x = case mode of
@@ -96,6 +107,7 @@ instance Instruction Instr where
     opcode (Add _ _ _ _) = 1
     opcode (Mult _ _ _ _) = 2
     opcode (FromInput _ _) = 3
+    opcode (ToOutput _ _) = 4
     opcode End = 99
 
 runInstr :: Instr -> Program -> Program
@@ -110,6 +122,9 @@ runInstr i pro =
                     setMem c (a * b) $ movePointer (len i) pro
             FromInput _ a ->
                 setMem a (input pro) $ movePointer (len i) pro
+            ToOutput _ _ ->
+                let [a] = readParamValues i m in
+                    addOutput a $ movePointer (len i) pro
             End -> movePointer (len i) (pro {halt = True})
 
 currentInstr :: Program -> Instr
@@ -121,20 +136,9 @@ currentInstr pro =
                 1 -> Add a b c d
                 2 -> Mult a b c d
                 3 -> FromInput a b
+                4 -> ToOutput a b
                 99 -> End
                 _ -> End
-
--- >>> x = initProgram 1 [1,0,0,0,99]
--- >>> x
--- >>> i = currentInstr x
--- >>> splitIntoParamsAndOpcode 1
--- >>> runProgramStep x
--- >>> readParamValues i (memory x)
--- Program {memory = [1,0,0,0,99], pointer = 0, input = 1, output = [], halt = False}
--- ([Position,Position,Position],1)
--- Program {memory = [1,2,0,0,99], pointer = 4, input = 1, output = [], halt = False}
--- [1,1,1]
---
 
 runProgramStep :: Program -> Program
 runProgramStep pro = 
@@ -153,6 +157,9 @@ initProgram i m = Program {memory=m, pointer=0, input=i, output=[], halt=False}
 
 runIntcode :: [Int] -> [Int]
 runIntcode m = memory $ runIntcodeProgram $ initProgram 1 m
+
+outputOfRunProgram :: [Int] -> Int
+outputOfRunProgram = head . output . runIntcodeProgram . (initProgram 1)
 
 setNounVerb :: Int -> Int -> [Int] -> [Int]
 setNounVerb n v = replaceIn n 1 . (replaceIn v 2)
