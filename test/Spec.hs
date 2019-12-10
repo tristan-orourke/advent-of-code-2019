@@ -4,6 +4,8 @@ import Intcode
 import Wires
 import Util
 import Passwords
+import Tree
+import Orbits
 
 main :: IO ()
 main = hspec $ do 
@@ -87,5 +89,18 @@ main = hspec $ do
             isValidStrict 123444 `shouldBe` False
         it "111122 is valid, because it has still contains a double 2" $
             isValidStrict 111122 `shouldBe` True
+
+    describe "Tree.mergeForest" $ do
+        it "[(1,2),(3,4),(2,3)] should merge into one tree" $
+            (length . mergeForest) [Node 1 [Node 2 []], Node 3 [Node 4 []], Node 2 [Node 3 []]] `shouldBe` 1
+        it "[(2,3),(3,4),(1,2)] should merge into one tree" $
+            (length . mergeForest) [Node 2 [Node 3 []], Node 3 [Node 4 []], Node 1 [Node 2 []]] `shouldBe` 1
+
+    describe "Orbits.orbitOfStr" $ do
+        it "AAA)BBB shoulbe become Node AAA [Node BBB []]" $
+            orbitOfStr "AAA)BBB" `shouldBe` Node "AAA" [Node "BBB" []]
+    describe "Orbits.totalDirectIndirectOrbits" $ do
+        it "[COM)B,B)C,C)D,D)E,E)F,B)G,G)H,D)I,E)J,J)K,K)L] should be 42 total orbits" $
+            totalDirectIndirectOrbits ["COM)B","B)C","C)D","D)E","E)F","B)G","G)H","D)I","E)J","J)K","K)L"] `shouldBe` 42
 
         

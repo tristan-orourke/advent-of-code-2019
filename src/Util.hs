@@ -6,6 +6,9 @@ import Control.Applicative
 strToInt :: String -> Int
 strToInt = read
 
+intToStr :: Int -> String
+intToStr = show
+
 wordsWhen :: (Char -> Bool) -> String -> [String]
 wordsWhen p s = case dropWhile p s of
     "" -> []
