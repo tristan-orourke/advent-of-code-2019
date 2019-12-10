@@ -41,8 +41,18 @@ main = hspec $ do
             runIntcode [1101,100,(-1),4,0] `shouldBe` [1101,100,(-1),4,99]
         it "3,3,99,0 becomes 3,3,99,1" $
             runIntcode [3,3,99,0] `shouldBe` [3,3,99,1]
+    describe "Intcode.outputOfRunProgram" $ do
         it "4,3,99,6 outputs 6" $
-            outputOfRunProgram [4,3,99,6] `shouldBe` 6
+            outputOfRunProgram 1 [4,3,99,6] `shouldBe` 6
+        it "3,9,8,9,10,9,4,9,99,-1,8 outputs True if input equals 8" $
+            outputOfRunProgram 8 [3,9,8,9,10,9,4,9,99,-1,8] `shouldBe` 1
+        it "3,9,8,9,10,9,4,9,99,-1,8 outputs False if input doesn't equal 8" $
+            outputOfRunProgram 7 [3,9,8,9,10,9,4,9,99,-1,8] `shouldBe` 0
+        it "3,9,7,9,10,9,4,9,99,-1,8 outputs True if input less than 8" $
+            outputOfRunProgram 3 [3,9,7,9,10,9,4,9,99,-1,8] `shouldBe` 1
+        it "3,9,7,9,10,9,4,9,99,-1,8 outputs False if input doesn't equal 8" $
+            outputOfRunProgram 8 [3,9,7,9,10,9,4,9,99,-1,8] `shouldBe` 0
+        -- TODO: add tests for day 5 part 2
     
     describe "Wires.extendPathSeg" $ do
         it "Extend newWire by U3 gives [(0,3)(0,0)]" $

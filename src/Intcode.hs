@@ -21,8 +21,8 @@ setMem i v pro =
     let m = memory pro in
         pro { memory = replaceAt m i v}
 
-movePointer :: Int -> Program -> Program
-movePointer n pro =
+shiftPointer :: Int -> Program -> Program
+shiftPointer n pro =
     let p = pointer pro in
         pro { pointer = (p + n) }
 
@@ -75,6 +75,10 @@ data Instr = Add Int Int Int Int
             | Mult Int Int Int Int
             | FromInput Int Int
             | ToOutput Int Int
+            | JumpIfTrue Int Int Int
+            | JumpIfFalse Int Int Int
+            | LessThan Int Int Int Int
+            | Equals Int Int Int Int
             | End
 
     deriving (Show, Eq)
@@ -84,21 +88,34 @@ instance Instruction Instr where
     len (Mult _ _ _ _) = 4
     len (FromInput _ _) = 2
     len (ToOutput _ _) = 2
+    len (JumpIfTrue _ _ _) = 3
+    len (JumpIfFalse _ _ _) = 3
+    len (LessThan _ _ _ _) = 4
+    len (Equals _ _ _ _) = 4
     len (End) = 1
+
     values (Add _ a b c) = [a,b,c]
     values (Mult _ a b c) = [a,b,c]
     values (FromInput _ a) = [a]
     values (ToOutput _ a) = [a]
+    values (JumpIfTrue _ a b) = [a, b]
+    values (JumpIfFalse _ a b) = [a, b]
+    values (LessThan _ a b c) = [a, b, c]
+    values (Equals _ a b c) = [a, b, c]
     values (End) = []
+    
     paramModes i = case i of
-        (Add x _ _ _) -> let (xs, _) = splitAtOpcode x in
-                            paramModesOfInts (len i - 1) xs
-        (Mult x _ _ _) -> let (xs, _) = splitAtOpcode x in
-                            paramModesOfInts (len i - 1) xs
+        (Add x _ _ _) -> getModes i x
+        (Mult x _ _ _) -> getModes i x
         (FromInput _ _) -> [Immediate]
-        (ToOutput x _) -> let (xs, _) = splitAtOpcode x in
-                            paramModesOfInts (len i - 1) xs
+        (ToOutput x _) -> getModes i x
+        (JumpIfTrue x _ _) -> getModes i x
+        (JumpIfFalse x _ _) -> getModes i x
+        (LessThan x _ _ _) -> getModes i x
+        (Equals x _ _ _) -> getModes i x
         (End) -> []
+        where getModes i x = let (xs, _) = splitAtOpcode x in
+                                paramModesOfInts (len i - 1) xs
     readParamValues a m = 
         let readParamValue' m mode x = case mode of
                 Position -> m !! x
@@ -108,6 +125,10 @@ instance Instruction Instr where
     opcode (Mult _ _ _ _) = 2
     opcode (FromInput _ _) = 3
     opcode (ToOutput _ _) = 4
+    opcode (JumpIfTrue _ _ _) = 3
+    opcode (JumpIfFalse _ _ _) = 3
+    opcode (LessThan _ _ _ _) = 4
+    opcode (Equals _ _ _ _) = 4
     opcode End = 99
 
 runInstr :: Instr -> Program -> Program
@@ -116,16 +137,32 @@ runInstr i pro =
         case i of
             Add _ _ _ c -> 
                 let [a, b, _] = readParamValues i m in
-                    setMem c (a + b) $ movePointer (len i) pro
+                    setMem c (a + b) $ shiftPointer (len i) pro
             Mult _ _ _ c -> 
                 let [a, b, _] = readParamValues i m in
-                    setMem c (a * b) $ movePointer (len i) pro
+                    setMem c (a * b) $ shiftPointer (len i) pro
             FromInput _ a ->
-                setMem a (input pro) $ movePointer (len i) pro
+                setMem a (input pro) $ shiftPointer (len i) pro
             ToOutput _ _ ->
                 let [a] = readParamValues i m in
-                    addOutput a $ movePointer (len i) pro
-            End -> movePointer (len i) (pro {halt = True})
+                    addOutput a $ shiftPointer (len i) pro
+            JumpIfTrue x _ _ -> 
+                 let [a, b] = readParamValues i m in
+                    if a /= 0 then pro { pointer=b } else shiftPointer (len i) pro
+            JumpIfFalse x _ _ ->
+                let [a, b] = readParamValues i m in
+                    if a == 0 then pro { pointer=b } else shiftPointer (len i) pro
+            LessThan x _ _ c -> 
+                let [a, b, _] = readParamValues i m in
+                    if a < 0 
+                        then setMem c 1 $ shiftPointer (len i) pro 
+                        else shiftPointer (len i) pro
+            Equals x _ _ c ->
+                 let [a, b, _] = readParamValues i m in
+                    if a == b 
+                        then setMem c 1 $ shiftPointer (len i) pro 
+                        else shiftPointer (len i) pro
+            End -> shiftPointer (len i) (pro {halt = True})
 
 currentInstr :: Program -> Instr
 currentInstr pro = 
@@ -137,6 +174,10 @@ currentInstr pro =
                 2 -> Mult a b c d
                 3 -> FromInput a b
                 4 -> ToOutput a b
+                5 -> JumpIfTrue a b c
+                6 -> JumpIfFalse a b c
+                7 -> LessThan a b c d
+                8 -> Equals a b c d
                 99 -> End
                 _ -> End
 
@@ -158,8 +199,8 @@ initProgram i m = Program {memory=m, pointer=0, input=i, output=[], halt=False}
 runIntcode :: [Int] -> [Int]
 runIntcode m = memory $ runIntcodeProgram $ initProgram 1 m
 
-outputOfRunProgram :: [Int] -> Int
-outputOfRunProgram = head . output . runIntcodeProgram . (initProgram 1)
+outputOfRunProgram :: Int -> [Int] -> Int
+outputOfRunProgram input = head . output . runIntcodeProgram . (initProgram input)
 
 setNounVerb :: Int -> Int -> [Int] -> [Int]
 setNounVerb n v = replaceIn n 1 . (replaceIn v 2)

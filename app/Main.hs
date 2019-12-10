@@ -39,7 +39,9 @@ day4Part2 :: Int -> Int -> Int
 day4Part2 min max = countValidStrictInRange min max
 
 day5Part1 :: [Int] -> Int
-day5Part1 = outputOfRunProgram
+day5Part1 = outputOfRunProgram 1
+day5Part2 :: [Int] -> Int
+day5Part2 = outputOfRunProgram 5
 
 day6Part1:: [String] -> Int
 day6Part1 = totalDirectIndirectOrbits
@@ -61,6 +63,7 @@ main = do
     printAnswer 4 2 (day4Part2  158126 624574)
     input5 <- intRowFromFile "data/day5.txt"
     printAnswer 5 1 (day5Part1 input5)
+    printAnswer 5 2 (day5Part2 input5)
     input6 <- strLinesFromFile "data/day6.txt"
     printAnswer 6 1 (day6Part1 input6)
     printAnswer 6 2 (day6Part2 input6)
