@@ -9,6 +9,7 @@ import Orbits
 import Text.Printf
 import Text.Show
 import Amplifiers
+import Image
 
 printAnswer :: Show a => Int -> Int -> a -> IO ()
 printAnswer day part answer = do
@@ -54,6 +55,11 @@ day7Part1 = maxFiveAmplifiersOutput
 day7Part2 :: [Int] -> Int
 day7Part2 = maxBasicLoop
 
+day8Part1 :: [Int] -> Int
+day8Part1 xs = 
+    let l = layerWithFewestX 0 (pixelsToLayers 25 6 xs) in
+        countIn 1 l * countIn 2 l
+
 main :: IO ()
 main = do
     input1 <- intLinesFromFile "data/day1.txt"
@@ -76,3 +82,5 @@ main = do
     input7 <- intRowFromFile "data/day7.txt"
     printAnswer 7 1 (day7Part1 input7)
     printAnswer 7 2 (day7Part2 input7)
+    input8 <- digitsFromFile "data/day8.txt"
+    printAnswer 8 1 (day8Part1 input8)

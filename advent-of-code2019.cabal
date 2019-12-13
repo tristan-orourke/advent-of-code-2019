@@ -35,6 +35,7 @@ library
       Tree
       Wires
       Amplifiers
+      Image
   other-modules:
       Paths_advent_of_code2019
   hs-source-dirs:
