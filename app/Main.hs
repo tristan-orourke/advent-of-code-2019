@@ -8,6 +8,7 @@ import Passwords
 import Orbits
 import Text.Printf
 import Text.Show
+import Amplifiers
 
 printAnswer :: Show a => Int -> Int -> a -> IO ()
 printAnswer day part answer = do
@@ -48,6 +49,11 @@ day6Part1 = totalDirectIndirectOrbits
 day6Part2 :: [String] -> Int
 day6Part2 = countOrbitJumps "YOU" "SAN" 
 
+day7Part1 :: [Int] -> Int
+day7Part1 = maxFiveAmplifiersOutput
+day7Part2 :: [Int] -> Int
+day7Part2 = maxBasicLoop
+
 main :: IO ()
 main = do
     input1 <- intLinesFromFile "data/day1.txt"
@@ -67,3 +73,6 @@ main = do
     input6 <- strLinesFromFile "data/day6.txt"
     printAnswer 6 1 (day6Part1 input6)
     printAnswer 6 2 (day6Part2 input6)
+    input7 <- intRowFromFile "data/day7.txt"
+    printAnswer 7 1 (day7Part1 input7)
+    printAnswer 7 2 (day7Part2 input7)
