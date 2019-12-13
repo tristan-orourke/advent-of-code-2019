@@ -11,6 +11,7 @@ import Data.Maybe (listToMaybe)
 -- A Program consists of memory and a pointer
 data Program = Program  { memory :: [Int]
                         , pointer :: Int
+                        , relativeBase :: Int
                         , input :: Int
                         , output :: [Int]
                         , halt :: Bool
@@ -31,16 +32,12 @@ addOutput v pro =
     let o = output pro in
         pro { output = (v:o) }
 
-data ParameterMode = Position | Immediate deriving (Show, Eq)
-readParamValue :: ParameterMode -> [Int] -> Int -> Int
-readParamValue mode m p = 
-    case mode of
-        Position -> m !! (m !! p)
-        Immediate -> m !! p
+data ParameterMode = Position | Immediate | Relative deriving (Show, Eq)
 
 paramModeOfDigit :: Int -> ParameterMode
 paramModeOfDigit 0 = Position
 paramModeOfDigit 1 = Immediate
+paramModeOfDigit 2 = Relative
 paramModeOfDigit _ = error "Not a valid Parameter Mode code"
 
 paramModesOfInts :: Int -> [Int] -> [ParameterMode]
@@ -63,7 +60,7 @@ class Instruction a where
     len :: a -> Int
     values :: a -> [Int]
     paramModes :: a -> [ParameterMode]
-    readParamValues :: a -> [Int] -> [Int]
+    readParamValues :: a -> [Int] -> Int -> [Int]
     opcode :: a -> Int
 
 -- Opcode 3 takes a single integer as input and saves it to the position 
@@ -116,11 +113,12 @@ instance Instruction Instr where
         (End) -> []
         where getModes i x = let (xs, _) = splitAtOpcode x in
                                 paramModesOfInts (len i - 1) xs
-    readParamValues a m = 
-        let readParamValue' m mode x = case mode of
+    readParamValues a m r = 
+        let readParamValue m mode x = case mode of
                 Position -> m !! x
                 Immediate -> x
-            in zipWith (readParamValue' m) (paramModes a) (values a) 
+                Relative -> (m !! x) + r
+            in zipWith (readParamValue m) (paramModes a) (values a) 
     opcode (Add _ _ _ _) = 1
     opcode (Mult _ _ _ _) = 2
     opcode (FromInput _ _) = 3
@@ -133,31 +131,31 @@ instance Instruction Instr where
 
 runInstr :: Instr -> Program -> Program
 runInstr i pro = 
-    let m = memory pro in
+    let readParamValues' = readParamValues i (memory pro) (relativeBase pro) in
         case i of
             Add _ _ _ c -> 
-                let [a, b, _] = readParamValues i m in
+                let [a, b, _] = readParamValues' in
                     setMem c (a + b) $ shiftPointer (len i) pro
             Mult _ _ _ c -> 
-                let [a, b, _] = readParamValues i m in
+                let [a, b, _] = readParamValues' in
                     setMem c (a * b) $ shiftPointer (len i) pro
             FromInput _ a ->
                 setMem a (input pro) $ shiftPointer (len i) pro
             ToOutput _ _ ->
-                let [a] = readParamValues i m in
+                let [a] = readParamValues' in
                     addOutput a $ shiftPointer (len i) pro
             JumpIfTrue x _ _ -> 
-                 let [a, b] = readParamValues i m in
+                 let [a, b] = readParamValues' in
                     if a /= 0 then pro { pointer=b } else shiftPointer (len i) pro
             JumpIfFalse x _ _ ->
-                let [a, b] = readParamValues i m in
+                let [a, b] = readParamValues' in
                     if a == 0 then pro { pointer=b } else shiftPointer (len i) pro
             LessThan x _ _ c -> 
-                let [a, b, _] = readParamValues i m in
+                let [a, b, _] = readParamValues' in
                     let y = if a < b then 1 else 0 in
                         setMem c y $ shiftPointer (len i) pro 
             Equals x _ _ c ->
-                 let [a, b, _] = readParamValues i m in
+                 let [a, b, _] = readParamValues' in
                    let y = if a == b then 1 else 0 in
                         setMem c y $ shiftPointer (len i) pro 
             End -> shiftPointer (len i) (pro {halt = True})
@@ -211,7 +209,7 @@ runIntcodeProgram pro =
         else runIntcodeProgram $ runProgramStep pro
 
 initProgram :: Int -> [Int] -> Program
-initProgram i m = Program {memory=m, pointer=0, input=i, output=[], halt=False}
+initProgram i m = Program {memory=m, pointer=0, relativeBase=0, input=i, output=[], halt=False}
 
 runIntcode :: [Int] -> [Int]
 runIntcode m = memory $ runIntcodeProgram $ initProgram 1 m
