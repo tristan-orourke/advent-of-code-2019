@@ -16,6 +16,11 @@ printAnswer day part answer = do
     let output = (printf "Day %d Part %d: " day part) ++ show answer
     putStrLn output
 
+drawAnswer :: Int -> Int -> String -> IO ()
+drawAnswer day part answer = do
+    let output = (printf "Day %d Part %d:\n" day part) ++ answer
+    putStr output
+
 day1Part1 :: [Int] -> Int
 day1Part1 = sum . map calcFuel
 
@@ -57,8 +62,10 @@ day7Part2 = maxBasicLoop
 
 day8Part1 :: [Int] -> Int
 day8Part1 xs = 
-    let l = layerWithFewestX 0 (pixelsToLayers 25 6 xs) in
+    let l = layerWithFewestX 0 (digitsToLayers 25 6 xs) in
         countIn 1 l * countIn 2 l
+day8Part2 :: [Int] -> String
+day8Part2 xs = drawPixels 25 $ renderLayers $ digitsToLayers 25 6 xs
 
 main :: IO ()
 main = do
@@ -84,3 +91,4 @@ main = do
     printAnswer 7 2 (day7Part2 input7)
     input8 <- digitsFromFile "data/day8.txt"
     printAnswer 8 1 (day8Part1 input8)
+    drawAnswer 8 2 (day8Part2 input8)
