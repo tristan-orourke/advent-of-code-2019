@@ -100,7 +100,14 @@ main = hspec $ do
                 outputOfRunProgram 1 [1108,3,5,5,104,-1,99 ] `shouldBe` 0
             it "1008,3,5,5,104,-1,99  should output 1" $
                 outputOfRunProgram 1 [1008,3,5,5,104,-1,99 ] `shouldBe` 1
-    
+        describe "AdjustRelative instr" $ do
+            it "The program 109,1,204,-1,1001,100,1,100,1008,100,16,101,1006,101,0,99 should produce itself as output" $
+                let x = [109,1,204,-1,1001,100,1,100,1008,100,16,101,1006,101,0,99] in
+                    outputAllRunProgram 1 x `shouldBe` x   
+            it "Should output a 16 digit number for 1102,34915192,34915192,7,4,7,99,0" $
+                length (digits (outputOfRunProgram 1 [1102,34915192,34915192,7,4,7,99,0])) `shouldBe` 16
+            it "104,1125899906842624,99 should output the large number in the middle." $
+                outputOfRunProgram 1 [104,1125899906842624,99] `shouldBe` 1125899906842624
     describe "Wires.extendPathSeg" $ do
         it "Extend newWire by U3 gives [(0,3)(0,0)]" $
             toCoords (extendPathSeg "U3" newWire) `shouldBe` [(0,3)]

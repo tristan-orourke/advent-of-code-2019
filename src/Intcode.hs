@@ -3,6 +3,7 @@ module Intcode
         runIntcode,
         runWithNounVerb,
         outputOfRunProgram,
+        outputAllRunProgram,
     ) where
 
 import Util
@@ -41,6 +42,11 @@ shiftPointer :: Int -> Program -> Program
 shiftPointer n pro =
     let p = pointer pro in
         pro { pointer = (p + n) }
+
+shiftRelativeBase :: Int -> Program -> Program
+shiftRelativeBase n pro =
+    let r = relativeBase pro in
+        pro { relativeBase = (r + n) }
 
 addOutput :: Int -> Program -> Program
 addOutput v pro = 
@@ -92,6 +98,7 @@ data Instr = Add Int Int Int Int
             | JumpIfFalse Int Int Int
             | LessThan Int Int Int Int
             | Equals Int Int Int Int
+            | AdjustRelative Int Int
             | End
 
     deriving (Show, Eq)
@@ -105,6 +112,7 @@ instance Instruction Instr where
     len (JumpIfFalse _ _ _) = 3
     len (LessThan _ _ _ _) = 4
     len (Equals _ _ _ _) = 4
+    len (AdjustRelative _ _) = 2
     len (End) = 1
 
     values (Add _ a b c) = [a,b,c]
@@ -115,6 +123,7 @@ instance Instruction Instr where
     values (JumpIfFalse _ a b) = [a, b]
     values (LessThan _ a b c) = [a, b, c]
     values (Equals _ a b c) = [a, b, c]
+    values (AdjustRelative _ a) = [a]
     values (End) = []
     
     paramModes i = case i of
@@ -126,6 +135,7 @@ instance Instruction Instr where
         (JumpIfFalse x _ _) -> getModes i x
         (LessThan x _ _ _) -> getModes i x
         (Equals x _ _ _) -> getModes i x
+        (AdjustRelative x _) -> getModes i x
         (End) -> []
         where getModes i x = let (xs, _) = splitAtOpcode x in
                                 paramModesOfInts (len i - 1) xs
@@ -133,16 +143,17 @@ instance Instruction Instr where
         let readParamValue pro mode x = case mode of
                 Position -> readMem x pro
                 Immediate -> x
-                Relative -> relativeBase pro + readMem x pro 
+                Relative -> readMem (relativeBase pro + x) pro 
             in zipWith (readParamValue pro) (paramModes a) (values a) 
     opcode (Add _ _ _ _) = 1
     opcode (Mult _ _ _ _) = 2
     opcode (FromInput _ _) = 3
     opcode (ToOutput _ _) = 4
-    opcode (JumpIfTrue _ _ _) = 3
-    opcode (JumpIfFalse _ _ _) = 3
-    opcode (LessThan _ _ _ _) = 4
-    opcode (Equals _ _ _ _) = 4
+    opcode (JumpIfTrue _ _ _) = 5
+    opcode (JumpIfFalse _ _ _) = 6
+    opcode (LessThan _ _ _ _) = 7
+    opcode (Equals _ _ _ _) = 8
+    opcode (AdjustRelative _ _) = 9
     opcode End = 99
 
     runInstr i pro = 
@@ -169,10 +180,13 @@ instance Instruction Instr where
                     let [a, b, _] = readParamValues' in
                         let y = if a < b then 1 else 0 in
                             setMem c y $ shiftPointer (len i) pro 
-                Equals x _ _ c ->
+                Equals _ _ _ c ->
                     let [a, b, _] = readParamValues' in
                     let y = if a == b then 1 else 0 in
                             setMem c y $ shiftPointer (len i) pro 
+                AdjustRelative _ _ -> 
+                    let [a] = readParamValues' in
+                        shiftRelativeBase a $ shiftPointer (len i) pro
                 End -> shiftPointer (len i) (pro {halt = True})
 
 currentInstr :: Program -> Instr
@@ -181,40 +195,53 @@ currentInstr pro =
         [a, b, c, d] = readMemBlock p 4 pro in
         let (_, x) = splitIntoParamsAndOpcode a 
             in case x of
-                1 ->  Add a b c d
-                2 ->  Mult a b c d
-                3 ->  FromInput a b
-                4 ->  ToOutput a b
-                5 ->  JumpIfTrue a b c
-                6 ->  JumpIfFalse a b c
-                7 ->  LessThan a b c d
-                8 ->  Equals a b c d
+                1 -> Add a b c d
+                2 -> Mult a b c d
+                3 -> FromInput a b
+                4 -> ToOutput a b
+                5 -> JumpIfTrue a b c
+                6 -> JumpIfFalse a b c
+                7 -> LessThan a b c d
+                8 -> Equals a b c d
+                9 -> AdjustRelative a b
                 99 -> End
                 _ -> End
 
--- >>> x = [2,3,0,3,99]
+-- >>> x = [109,1,204,-1,1001,100,1,100,1008,100,16,101,1006,101,0,99]
 -- >>> p = initProgram 1 x
 -- >>> p
 -- >>> i = currentInstr p
 -- >>> i
--- >>> values i
--- >>> paramModes i
--- >>> readParamValues i p
--- >>> readMem 0 p
--- Program {memory = [2,3,0,3,99], pointer = 0, relativeBase = 0, input = 1, output = [], halt = False}
--- Mult 2 3 0 3
--- [3,0,3]
--- [Position,Position,Position]
--- [3,0,3]
--- 2
+-- >>> p2 = runNSteps 1 p
+-- >>> p2
+-- >>> i2 = currentInstr p2
+-- >>> values i2
+-- >>> paramModes i2
+-- >>> readParamValues i2
+-- Program {memory = [109,1,204,-1,1001,100,1,100,1008,100,16,101,1006,101,0,99], pointer = 0, relativeBase = 0, input = 1, output = [], halt = False}
+-- AdjustRelative 109 1
+-- Program {memory = [109,1,204,-1,1001,100,1,100,1008,100,16,101,1006,101,0,99], pointer = 2, relativeBase = 1, input = 1, output = [], halt = False}
+-- [-1]
+-- [Relative]
+-- <BLANKLINE>
+-- <interactive>:4282:2-19: error:
+--     • No instance for (Show (Program -> [Int]))
+--         arising from a use of ‘print’
+--         (maybe you haven't applied a function to enough arguments?)
+--     • In a stmt of an interactive GHCi command: print it
 --
 
 runProgramStep :: Program -> Program
-runProgramStep pro = 
-    
+runProgramStep pro =    
     if halt pro 
         then pro
         else runInstr (currentInstr pro) pro
+
+runNSteps :: Int -> Program -> Program
+runNSteps n pro = 
+    if n <= 0 
+        then pro
+        else runNSteps (n-1) (runProgramStep pro)
 
 runIntcodeProgram :: Program -> Program
 runIntcodeProgram pro = 
@@ -231,10 +258,11 @@ runIntcode m = memory $ runIntcodeProgram $ initProgram 1 m
 outputOfRunProgram :: Int -> [Int] -> Int
 outputOfRunProgram input = head . output . runIntcodeProgram . (initProgram input)
 
+outputAllRunProgram :: Int -> [Int] -> [Int]
+outputAllRunProgram input = reverse . output . runIntcodeProgram . (initProgram input)
+
 setNounVerb :: Int -> Int -> [Int] -> [Int]
 setNounVerb n v = replaceIn n 1 . (replaceIn v 2)
 
 runWithNounVerb :: Int -> Int -> [Int] -> [Int]
 runWithNounVerb n v = runIntcode . (setNounVerb n v)
-
-
