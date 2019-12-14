@@ -110,9 +110,17 @@ safeTail = safeL tail
 safeInit :: [a] -> [a]
 safeInit = safeL init
 
+-- | Pads xs with p (on the left) if n > length xs.
+-- | Returns xs unchanged if the length is higher than n.
 lpad :: a -> Int -> [a] -> [a]
-lpad p n xs = replicate (n - length ys) p ++ ys
+lpad p n xs = replicate (n - length ys) p ++ xs
     where ys = take n xs
+
+-- | Pads xs with p (on the right) if n > length xs.
+-- | Returns xs unchanged if the length is higher than n.
+-- | This will fail on infinite lists.
+rpad :: a -> Int -> [a] -> [a]
+rpad p n xs = xs ++ replicate (n - length xs) p
 
 minMaybe :: Ord a => [Maybe a] -> Maybe a
 minMaybe ms = case catMaybes ms of

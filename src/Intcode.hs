@@ -17,9 +17,24 @@ data Program = Program  { memory :: [Int]
                         , halt :: Bool
                         } deriving (Show, Eq)
 
+-- class IProgram p where
+--     readMem :: Program -> Int -> Int
+--     readMemBlock :: Program 
+
+readMem :: Int -> Program -> Int
+readMem i pro = 
+    if i >= length m 
+        then 0 
+        else m !! i
+    where m = memory pro
+
+readMemBlock :: Int -> Int -> Program -> [Int]
+readMemBlock i n pro = rpad 0 n $ take n $ snd $ splitAt i m
+        where m = memory pro
+
 setMem :: Int -> Int -> Program -> Program
 setMem i v pro = 
-    let m = memory pro in
+    let m = rpad 0 i (memory pro) in
         pro { memory = replaceAt m i v}
 
 shiftPointer :: Int -> Program -> Program
@@ -60,8 +75,9 @@ class Instruction a where
     len :: a -> Int
     values :: a -> [Int]
     paramModes :: a -> [ParameterMode]
-    readParamValues :: a -> [Int] -> Int -> [Int]
+    readParamValues :: a -> Program -> [Int]
     opcode :: a -> Int
+    runInstr :: a -> Program -> Program
 
 -- Opcode 3 takes a single integer as input and saves it to the position 
 -- given by its only parameter. 
@@ -113,12 +129,12 @@ instance Instruction Instr where
         (End) -> []
         where getModes i x = let (xs, _) = splitAtOpcode x in
                                 paramModesOfInts (len i - 1) xs
-    readParamValues a m r = 
-        let readParamValue m mode x = case mode of
-                Position -> m !! x
+    readParamValues a pro = 
+        let readParamValue pro mode x = case mode of
+                Position -> readMem x pro
                 Immediate -> x
-                Relative -> (m !! x) + r
-            in zipWith (readParamValue m) (paramModes a) (values a) 
+                Relative -> relativeBase pro + readMem x pro 
+            in zipWith (readParamValue pro) (paramModes a) (values a) 
     opcode (Add _ _ _ _) = 1
     opcode (Mult _ _ _ _) = 2
     opcode (FromInput _ _) = 3
@@ -129,75 +145,73 @@ instance Instruction Instr where
     opcode (Equals _ _ _ _) = 4
     opcode End = 99
 
-runInstr :: Instr -> Program -> Program
-runInstr i pro = 
-    let readParamValues' = readParamValues i (memory pro) (relativeBase pro) in
-        case i of
-            Add _ _ _ c -> 
-                let [a, b, _] = readParamValues' in
-                    setMem c (a + b) $ shiftPointer (len i) pro
-            Mult _ _ _ c -> 
-                let [a, b, _] = readParamValues' in
-                    setMem c (a * b) $ shiftPointer (len i) pro
-            FromInput _ a ->
-                setMem a (input pro) $ shiftPointer (len i) pro
-            ToOutput _ _ ->
-                let [a] = readParamValues' in
-                    addOutput a $ shiftPointer (len i) pro
-            JumpIfTrue x _ _ -> 
-                 let [a, b] = readParamValues' in
-                    if a /= 0 then pro { pointer=b } else shiftPointer (len i) pro
-            JumpIfFalse x _ _ ->
-                let [a, b] = readParamValues' in
-                    if a == 0 then pro { pointer=b } else shiftPointer (len i) pro
-            LessThan x _ _ c -> 
-                let [a, b, _] = readParamValues' in
-                    let y = if a < b then 1 else 0 in
-                        setMem c y $ shiftPointer (len i) pro 
-            Equals x _ _ c ->
-                 let [a, b, _] = readParamValues' in
-                   let y = if a == b then 1 else 0 in
-                        setMem c y $ shiftPointer (len i) pro 
-            End -> shiftPointer (len i) (pro {halt = True})
+    runInstr i pro = 
+        let readParamValues' = readParamValues i pro in
+            case i of
+                Add _ _ _ c -> 
+                    let [a, b, _] = readParamValues' in
+                        setMem c (a + b) $ shiftPointer (len i) pro
+                Mult _ _ _ c -> 
+                    let [a, b, _] = readParamValues' in
+                        setMem c (a * b) $ shiftPointer (len i) pro
+                FromInput _ a ->
+                    setMem a (input pro) $ shiftPointer (len i) pro
+                ToOutput _ _ ->
+                    let [a] = readParamValues' in
+                        addOutput a $ shiftPointer (len i) pro
+                JumpIfTrue x _ _ -> 
+                    let [a, b] = readParamValues' in
+                        if a /= 0 then pro { pointer=b } else shiftPointer (len i) pro
+                JumpIfFalse x _ _ ->
+                    let [a, b] = readParamValues' in
+                        if a == 0 then pro { pointer=b } else shiftPointer (len i) pro
+                LessThan x _ _ c -> 
+                    let [a, b, _] = readParamValues' in
+                        let y = if a < b then 1 else 0 in
+                            setMem c y $ shiftPointer (len i) pro 
+                Equals x _ _ c ->
+                    let [a, b, _] = readParamValues' in
+                    let y = if a == b then 1 else 0 in
+                            setMem c y $ shiftPointer (len i) pro 
+                End -> shiftPointer (len i) (pro {halt = True})
 
 currentInstr :: Program -> Instr
 currentInstr pro = 
-    let (m, p) = (memory pro, pointer pro) in
-        let (_, x) = splitIntoParamsAndOpcode (m !! p) 
-            xs = snd $ splitAt p m
+    let p = pointer pro
+        [a, b, c, d] = readMemBlock p 4 pro in
+        let (_, x) = splitIntoParamsAndOpcode a 
             in case x of
-                1 -> uncurry4 Add (tuplify4 $ take 4 xs)
-                2 -> uncurry4 Mult (tuplify4 $ take 4 xs)
-                3 -> uncurry FromInput (tuplify2 $ take 2 xs)
-                4 -> uncurry ToOutput (tuplify2 $ take 2 xs)
-                5 -> uncurry3 JumpIfTrue $ tuplify3 $ take 3 $ snd $ splitAt p m
-                6 -> uncurry3 JumpIfFalse $ tuplify3 $ take 3 $ snd $ splitAt p m
-                7 -> uncurry4 LessThan (tuplify4 $ take 4 xs)
-                8 -> uncurry4 Equals (tuplify4 $ take 4 xs)
+                1 ->  Add a b c d
+                2 ->  Mult a b c d
+                3 ->  FromInput a b
+                4 ->  ToOutput a b
+                5 ->  JumpIfTrue a b c
+                6 ->  JumpIfFalse a b c
+                7 ->  LessThan a b c d
+                8 ->  Equals a b c d
                 99 -> End
                 _ -> End
 
--- >>> x = [1107,0,1,5,104,-1,99 ]
--- >>> y = [7,0,1,5,104,-1,99 ]
--- >>> p = initProgram 1 y
+-- >>> x = [2,3,0,3,99]
+-- >>> p = initProgram 1 x
 -- >>> p
--- >>> readParamValues (currentInstr p) (memory p)
--- >>> currentInstr p
--- >>> runProgramStep p
--- >>> (runProgramStep . runProgramStep) p
--- >>> (runProgramStep . runProgramStep . runProgramStep) p
--- >>> outputOfRunProgram 1 y
--- Program {memory = [7,0,1,5,104,-1,99], pointer = 0, input = 1, output = [], halt = False}
--- [7,0,-1]
--- LessThan 7 0 1 5
--- Program {memory = [7,0,1,5,104,-1,99], pointer = 4, input = 1, output = [], halt = False}
--- Program {memory = [7,0,1,5,104,-1,99], pointer = 6, input = 1, output = [-1], halt = False}
--- Program {memory = [7,0,1,5,104,-1,99], pointer = 7, input = 1, output = [-1], halt = True}
--- -1
+-- >>> i = currentInstr p
+-- >>> i
+-- >>> values i
+-- >>> paramModes i
+-- >>> readParamValues i p
+-- >>> readMem 0 p
+-- Program {memory = [2,3,0,3,99], pointer = 0, relativeBase = 0, input = 1, output = [], halt = False}
+-- Mult 2 3 0 3
+-- [3,0,3]
+-- [Position,Position,Position]
+-- [3,0,3]
+-- 2
 --
 
 runProgramStep :: Program -> Program
 runProgramStep pro = 
+    
     if halt pro 
         then pro
         else runInstr (currentInstr pro) pro
