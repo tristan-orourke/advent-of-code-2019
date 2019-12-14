@@ -1,9 +1,13 @@
 module Intcode
     (
+        Program (..),
+        initProgram,
+        unpauseProgram,
         runIntcode,
         runWithNounVerb,
         outputOfRunProgram,
         outputAllRunProgram,
+        outputWithQueuedInputs,
     ) where
 
 import Util
@@ -13,9 +17,10 @@ import Data.Maybe (listToMaybe)
 data Program = Program  { memory :: [Int]
                         , pointer :: Int
                         , relativeBase :: Int
-                        , input :: Int
+                        , input :: [Int]
                         , output :: [Int]
                         , halt :: Bool
+                        , pause :: Bool
                         } deriving (Show, Eq)
 
 -- class IProgram p where
@@ -52,6 +57,16 @@ addOutput :: Int -> Program -> Program
 addOutput v pro = 
     let o = output pro in
         pro { output = (v:o) }
+
+pushInput :: Int -> Program -> Program
+pushInput i pro =
+    let i' = input pro in
+        pro { input = (i' ++ [i]) }
+
+popInput :: Program -> (Int, Program)
+popInput pro =
+    let (i:is) = input pro in
+        (i, pro { input=is })
 
 data ParameterMode = Position | Immediate | Relative deriving (Show, Eq)
 
@@ -166,7 +181,10 @@ instance Instruction Instr where
                     let [a, b, _] = readParamValues' in
                         setMem c (a * b) $ shiftPointer (len i) pro
                 FromInput _ a ->
-                    setMem a (input pro) $ shiftPointer (len i) pro
+                    if input pro == []
+                        then pro { pause=True }
+                        else let (x, pro') = popInput pro in
+                            setMem a x $ shiftPointer (len i) pro'
                 ToOutput _ _ ->
                     let [a] = readParamValues' in
                         addOutput a $ shiftPointer (len i) pro
@@ -232,8 +250,8 @@ currentInstr pro =
 --
 
 runProgramStep :: Program -> Program
-runProgramStep pro =    
-    if halt pro 
+runProgramStep pro = 
+    if halt pro || pause pro
         then pro
         else runInstr (currentInstr pro) pro
 
@@ -245,21 +263,27 @@ runNSteps n pro =
 
 runIntcodeProgram :: Program -> Program
 runIntcodeProgram pro = 
-    if halt pro 
+    if halt pro || pause pro
         then pro
         else runIntcodeProgram $ runProgramStep pro
 
-initProgram :: Int -> [Int] -> Program
-initProgram i m = Program {memory=m, pointer=0, relativeBase=0, input=i, output=[], halt=False}
+initProgram :: [Int] -> [Int] -> Program
+initProgram i m = Program {memory=m, pointer=0, relativeBase=0, input=i, output=[], halt=False, pause=False}
+
+unpauseProgram :: Int -> Program -> Program
+unpauseProgram i pro = runIntcodeProgram $ pushInput i pro { pause=False }
 
 runIntcode :: [Int] -> [Int]
-runIntcode m = memory $ runIntcodeProgram $ initProgram 1 m
+runIntcode m = memory $ runIntcodeProgram $ initProgram [1] m
 
 outputOfRunProgram :: Int -> [Int] -> Int
-outputOfRunProgram input = head . output . runIntcodeProgram . (initProgram input)
+outputOfRunProgram input = head . output . runIntcodeProgram . (initProgram [input])
+
+outputWithQueuedInputs :: [Int] -> [Int] -> Int
+outputWithQueuedInputs input mem = head $ output $ runIntcodeProgram $ initProgram input mem
 
 outputAllRunProgram :: Int -> [Int] -> [Int]
-outputAllRunProgram input = reverse . output . runIntcodeProgram . (initProgram input)
+outputAllRunProgram input = reverse . output . runIntcodeProgram . (initProgram [input])
 
 setNounVerb :: Int -> Int -> [Int] -> [Int]
 setNounVerb n v = replaceIn n 1 . (replaceIn v 2)

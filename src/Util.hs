@@ -6,6 +6,9 @@ import Control.Applicative
 strToInt :: String -> Int
 strToInt = read
 
+charToInt :: Char -> Int
+charToInt c = read [c]
+
 intToStr :: Int -> String
 intToStr = show
 
@@ -17,6 +20,11 @@ wordsWhen p s = case dropWhile p s of
 
 splitOn :: Char -> String -> [String]
 splitOn delim = wordsWhen ((==) delim)
+
+splitEveryN :: Int -> [a] -> [[a]]
+splitEveryN _ [] = []
+splitEveryN n x = (take n x) : (splitEveryN n (drop n x))
+
 
 intLinesFromFile :: String -> IO [Int]
 intLinesFromFile file = do
@@ -35,6 +43,15 @@ strLinesFromFile file = do
     input <- readFile file
     let lineInput = (lines input)
     return lineInput
+
+digitsFromFile :: String -> IO [Int]
+digitsFromFile file = do
+    input <- readFile file
+    return (map charToInt input)
+
+-- >>> map charToInt "1234"
+-- [1,2,3,4]
+--
 
 zeroIfNegative :: Int -> Int
 zeroIfNegative = max 0
@@ -141,3 +158,6 @@ uncurry3 f (x,y,z) = f x y z
 
 uncurry4 :: (a -> a -> a -> a -> b) -> (a,a,a,a) -> b
 uncurry4 f (w,x,y,z) = f w x y z
+
+countIn :: Eq a => a -> [a] -> Int
+countIn x = length . filter (==x)
