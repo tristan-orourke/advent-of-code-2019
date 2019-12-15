@@ -69,6 +69,8 @@ day8Part2 xs = drawPixels 25 $ renderLayers $ digitsToLayers 25 6 xs
 
 day9Part1 :: [Int] -> [Int]
 day9Part1 = outputAllRunProgram 1
+day9Part2 :: [Int] -> [Int]
+day9Part2 = outputAllRunProgram 2
 
 main :: IO ()
 main = do
@@ -97,3 +99,4 @@ main = do
     drawAnswer 8 2 (day8Part2 input8)
     input9 <- intRowFromFile "data/day9.txt"
     printAnswer 9 1 (day9Part1 input9)
+    printAnswer 9 2 (day9Part2 input9)
